@@ -17,10 +17,10 @@
   <link rel="short icon" href="{{ get_url(path="images/favicon.png") }}" type="image/x-icon" />
   <link rel="stylesheet" href="{{ get_url(path="style.css") }}">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
-  <title>{% block title %}{{ config.title }}{% endblock title %}</title>
+  <title>{% block title %}{{ config.extra.title }}{% endblock title %}</title>
   {% if config.generate_feed %}
   {% block rss %}
-  <link rel="alternate" type="application/rss+xml" title="{{ config.title }}" href="{{ get_url(path="rss.xml",
+  <link rel="alternate" type="application/rss+xml" title="{{ config.extra.title }}" href="{{ get_url(path="rss.xml",
     trailing_slash=false, lang=lang) }}">
   {% endblock rss %}
   {% endif %}
@@ -33,9 +33,9 @@
     <div class="logo-title">
       <div class="title">
         <img src={{ get_url(path="images/logo@2x.png" ) }} style="width:127px;" alt="logo" />
-        <h3><a href="{{ get_url(path="@/_index.md", lang=lang) }}">{{ config.title }}</a></h3>
+        <h3><a href="{{ get_url(path="@/_index.md", lang=lang) }}">{{ config.extra.title }}</a></h3>
         <div class="description">
-          <p>{{ config.description }}</p>
+          <p>{{ config.extra.description }}</p>
         </div>
       </div>
     </div>
@@ -97,6 +97,8 @@
         {%- if config.extra.show.tags -%}
         <li><a {% if language_site_path is starting_with("/tags") %}class="current" {% endif %} href="{{ get_url(path="@/_index.md", lang=lang) }}tags">{{ trans(key="tags", lang=lang) }}</a></li>
         {%- endif -%}
+        <li><a {% if language_site_path is starting_with("/projects") %}class="current" {% endif %}
+          href="{{ get_url(path="@/projects/_index.md", lang=lang) }}">{{ trans(key="projects", lang=lang) }}</a></li>
         <li><a {% if language_site_path is starting_with("/archive") %}class="current" {% endif %}
             href="{{ get_url(path="@/archive/_index.md", lang=lang) }}">{{ trans(key="archive", lang=lang) }}</a></li>
         {%- if config.extra.show.links -%}
@@ -123,7 +125,6 @@
           </div>
         </div>
         {% endif %}
-        <div class="avatar"><img src="{{ get_url(path="images/avatar.jpg") }}"></div>
       </div>
     </div>
     <div class="autopagerize_page_element">
