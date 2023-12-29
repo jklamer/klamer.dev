@@ -1,0 +1,16 @@
+[package]
+name = "klamer_dev"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = { version = "0.7.2", features = ["http2"] }
+axum-htmx = "0.5.0"
+tokio = { features = ["macros", "rt-multi-thread"], version = "1.35.1" }
+tower = "0.4.13"
+bytes = "1.5.0"
+http-body-util = "0.1.0"
+http-body = "1.0.0"
+futures = "0.3.30"
