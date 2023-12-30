@@ -87,14 +87,6 @@ impl IntoHtml for Div {
     }
 }
 
-pub struct HtmxScript;
-
-impl IntoHtml for HtmxScript {
-    fn html_string(&self) -> String {
-        "<script src=\"https://unpkg.com/htmx.org@latest\"></script>".into()
-    }
-}
-
 pub struct Anchor<T: IntoHtml>(pub String, pub T);
 
 impl<T: IntoHtml> IntoHtml for Anchor<T> {
@@ -108,3 +100,16 @@ impl<T: IntoHtml> IntoHtml for Anchor<T> {
     }
 }
 
+pub struct Img {
+    pub uri: String,
+    pub alt_text: String,
+}
+
+impl IntoHtml for Img {
+    fn html_string(&self) -> String {
+        html_component("img",
+                       &["src=\"".to_string() + self.uri.as_str() + "\"",
+                                "alt=\"".to_string() + self.alt_text.as_str() + "\""])
+        + "</img>"
+    }
+}
