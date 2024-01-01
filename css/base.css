@@ -1,0 +1,271 @@
+@import url('https://fonts.googleapis.com/css2?family=Bitter:ital@0;1&family=Space+Mono:wght@400;700&display=swap');
+
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+/* much borrowed from https://nick.scialli.me/*/
+
+code[class*="language-"],
+pre[class*="language-"] {
+    color: #f8f8f2;
+    background: none;
+    text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    font-size: 1em;
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+    word-break: normal;
+    word-wrap: normal;
+    line-height: 1.5;
+
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+    padding: 1em;
+    margin: .5em 0;
+    overflow: auto;
+    border-radius: 0.3em;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+    background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+    padding: .1em;
+    border-radius: .3em;
+    white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+    color: #8292a2;
+}
+
+.token.punctuation {
+    color: #f8f8f2;
+}
+
+.token.namespace {
+    opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+    color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+    color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+    color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+    color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+    color: #e6db74;
+}
+
+.token.keyword {
+    color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+    color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+    font-weight: bold;
+}
+.token.italic {
+    font-style: italic;
+}
+
+.token.entity {
+    cursor: help;
+}
+/*
+ * New diff- syntax
+ */
+
+pre[class*="language-diff-"] {
+    --eleventy-code-padding: 1.25em;
+    padding-left: var(--eleventy-code-padding);
+    padding-right: var(--eleventy-code-padding);
+}
+.token.deleted {
+    background-color: hsl(0, 51%, 37%);
+    color: inherit;
+}
+.token.inserted {
+    background-color: hsl(126, 31%, 39%);
+    color: inherit;
+}
+
+/* Make the + and - characters unselectable for copy/paste */
+.token.prefix.unchanged,
+.token.prefix.inserted,
+.token.prefix.deleted {
+    -webkit-user-select: none;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+.token.prefix.inserted,
+.token.prefix.deleted {
+    width: var(--eleventy-code-padding);
+    background-color: rgba(0,0,0,.2);
+}
+
+/* Optional: full-width background color */
+.token.inserted:not(.prefix),
+.token.deleted:not(.prefix) {
+    display: block;
+    margin-left: calc(-1 * var(--eleventy-code-padding));
+    margin-right: calc(-1 * var(--eleventy-code-padding));
+    text-decoration: none; /* override del, ins, mark defaults */
+    color: inherit; /* override del, ins, mark defaults */
+}
+
+/* Defaults */
+:root {
+    --font-family: 'Space Mono', monospace;
+    --font-family-monospace: 'Space Mono', Consolas, Menlo, Monaco, Andale Mono WT, Andale Mono,
+    Lucida Console, Lucida Sans Typewriter, DejaVu Sans Mono,
+    Bitstream Vera Sans Mono, Liberation Mono, Nimbus Mono L, Courier New,
+    Courier, monospace;
+}
+
+/* Theme colors */
+:root {
+    --color-gray-20: #e0e0e0;
+    --color-gray-50: #c0c0c0;
+    --color-gray-90: #333;
+
+    --color-tan-background-color: #ede4ca;
+
+    --color-navy-blue: rgb(40,42,84);
+
+    --text-color: var(--color-gray-90);
+    --text-color-link: #082840;
+    --text-color-link-active: #5f2b48;
+    --text-color-link-visited: #17050f;
+
+    --syntax-tab-size: 2;
+}
+
+/* Global stylesheet */
+* {
+    box-sizing: border-box;
+    background-color: transparent;
+}
+
+html {
+    font-family: var(--font-family);
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--text-color);
+    background-color: var(--color-tan-background-color);
+}
+
+hr {
+    color: var(--color-navy-blue);
+}
+
+.body {
+    background-color: var(--color-tan-background-color);
+}
+
+.center {
+    margin: auto;
+    width: 50%;
+    padding: 10px;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 7fr;
+    grid-template-rows: 1fr 5fr;
+    gap: 10px 10px;
+    grid-template-areas:
+    "Logo Sections"
+    "Content Content";
+    font-family: Space Mono, monospace;
+}
+.Logo { grid-area: Logo; }
+.Sections {
+    justify-self: start;
+    align-self: center;
+    grid-area: Sections;
+}
+.Content {
+    justify-self: start;
+    align-self: start;
+    grid-area: Content;
+    font-family: 'Bitter', serif;
+}
+
+.section-items {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 1.5em;
+}
+
+ul.section-items:before {
+    content: "[";
+}
+
+ul.section-items:after {
+    content: "]";
+}
+
+li.section-item:before {
+    content: "|";
+}
