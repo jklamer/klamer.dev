@@ -207,12 +207,14 @@ html {
     font-family: var(--font-family);
     font-size: 18px;
     line-height: 1.5;
-    color: var(--text-color);
+    /*color: var(--text-color);*/
+    color: black;
     background-color: var(--color-tan-background-color);
 }
 
-hr {
-    color: var(--color-navy-blue);
+a {
+    text-decoration:none;
+    color:inherit;
 }
 
 .body {
@@ -221,31 +223,26 @@ hr {
 
 .center {
     margin: auto;
-    width: 50%;
+    width: 50vw;
     padding: 10px;
 }
 
 .container {
     display: grid;
     grid-template-columns: 1fr 7fr;
-    grid-template-rows: 1fr 5fr;
+    grid-template-rows: 1fr;
     gap: 10px 10px;
     grid-template-areas:
-    "Logo Sections"
-    "Content Content";
+    "Logo Sections";
     font-family: Space Mono, monospace;
 }
+
 .Logo { grid-area: Logo; }
+
 .Sections {
     justify-self: start;
     align-self: center;
     grid-area: Sections;
-}
-.Content {
-    justify-self: start;
-    align-self: start;
-    grid-area: Content;
-    font-family: 'Bitter', serif;
 }
 
 .section-items {
@@ -255,7 +252,8 @@ hr {
     list-style: none;
     padding: 0;
     margin: 0;
-    font-size: 1.5em;
+    font-size: 1.25em;
+    color: var(--color-navy-blue);
 }
 
 ul.section-items:before {
@@ -268,4 +266,34 @@ ul.section-items:after {
 
 li.section-item:before {
     content: "|";
+}
+
+footer {
+    display: block;
+    text-align: center;
+    border-top: 1px dashed var(--color-navy-blue);
+    color: var(--color-navy-blue);
+    padding: 1rem 0;
+}
+
+.Content {
+    /*justify-self: start;*/
+    /*align-self: start;*/
+    /*grid-area: Content;*/
+    width: 100%;
+    border-top: 1px dashed var(--color-navy-blue);
+    font-family: 'Bitter', serif;
+    margin-top: 2em;
+    padding: 25px;
+}
+
+.Content h1 {
+    font-family: Space Mono, monospace;
+    margin-top: 0.25em;
+    margin-block-start: 0;
+}
+
+.Content p .post-metadata {
+    font-size: 0.75em;
+    color: var(--color-gray-50);
 }

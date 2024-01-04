@@ -32,6 +32,7 @@ pub(crate) enum Attribute {
     CLASS(Vec<String>),
     WIDTH(u32),
     HEIGHT(u32),
+    MARGIN(u32),
 }
 
 impl Attribute {
@@ -40,6 +41,7 @@ impl Attribute {
             Attribute::CLASS(s) => format!("class=\"{}\"", s.join(" ")),
             Attribute::WIDTH(u) => format!("width=\"{}\"", u),
             Attribute::HEIGHT(u) => format!("height=\"{}\"", u),
+            Attribute::MARGIN(u) => format!("margin=\"{}\"", u),
         }
     }
 }
@@ -122,11 +124,11 @@ impl IntoHtml for Div {
     }
 }
 
-pub struct SimpleDiv<T:IntoHtml>(pub T);
+pub struct SimpleDiv<T:IntoHtml>(pub Option<Attributes>, pub T);
 
 impl<T:IntoHtml> IntoHtml for SimpleDiv<T> {
     fn html_string(&self) -> String {
-        html_element_with_attributes("div", None, &None) + self.0.html_string().as_str() + "</div>"
+        html_element_with_attributes("div", None, &self.0) + self.1.html_string().as_str() + "</div>"
     }
 }
 
@@ -136,8 +138,7 @@ impl<T: IntoHtml> IntoHtml for Anchor<T> {
     fn html_string(&self) -> String {
         html_element_with_attributes("a",
                                      Some(vec![
-                                         format!("href=\"{}\"", self.0),
-                                         "style=\"text-decoration:none;color:inherit;\"".to_string()]),
+                                         format!("href=\"{}\"", self.0)]),
                                      &None)
             + self.1.html_string().as_str()
             + "</a>"
@@ -192,6 +193,22 @@ pub struct Hr;
 
 impl IntoHtml for Hr {
     fn html_string(&self) -> String {
-        html_element_with_attributes("hr", None, &None)
+        html_element_with_attributes("hr", None, &None) + "</hr>"
+    }
+}
+
+pub struct Header1(pub String);
+
+impl IntoHtml for Header1 {
+    fn html_string(&self) -> String {
+        html_element_with_attributes("h1", None, &None) + self.0.as_str() + "</h1>"
+    }
+}
+
+pub struct Header2(pub String);
+
+impl IntoHtml for Header2 {
+    fn html_string(&self) -> String {
+        html_element_with_attributes("h2", None, &None) + self.0.as_str() + "</h2>"
     }
 }

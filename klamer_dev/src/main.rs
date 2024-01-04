@@ -4,7 +4,9 @@ use axum::routing::get;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber;
 
-use crate::html::{Anchor, AttributesBuilder, DivBuilder, Hr, ImgBuilder, IntoHtml, UlistBuilder};
+use blog_files_macro::list_blog_files;
+
+use crate::html::{Anchor, AttributesBuilder, DivBuilder, Header1, ImgBuilder, IntoHtml, UlistBuilder};
 use crate::html::Attribute::{CLASS, WIDTH};
 
 mod html;
@@ -13,12 +15,15 @@ const ICON: &[u8] = include_bytes!("../assests/k_logo.dev.png");
 const LOGO: &[u8] = include_bytes!("../assests/klamer.dev.png");
 const BASE_CSS: &str = include_str!("../css/base.css");
 
+const CONTENTS: &[(&'static str, &'static str)] = &list_blog_files!();
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
     let app = Router::new()
         .route("/", get(home_page))
         .route("/blog", get(blog_page))
+        .route("/annie", get(annie_page))
         .route("/favicon.png", get(icon))
         .route("/logo.png", get(logo))
         .route("/base.css", get(base_css))
@@ -33,17 +38,20 @@ async fn main() {
 }
 
 async fn home_page() -> Html<String> {
-    page(vec!["Home content".into()])
+    page(vec!["Home content".into()], false)
 }
 
 // write axum handlers needed to set up a blog
 async fn blog_page() -> Html<String> {
-    page(vec!["Blog content".into()])
+    page(vec![Header1("My First Blog Post".to_string()).into(), "Blog content im going to make this super long as possible so that I can test this whole fucking shit. BLAH LBAFdfjskfjksjfslkj . I am so cool wow so insightful".into()], true)
 }
 
-fn page(mut content: Vec<Box<dyn IntoHtml>>) -> Html<String> {
-    //content.insert(0, Box::new(Hr));
-    let page_components: Vec<Box<dyn IntoHtml>> = vec![
+async fn annie_page() -> Html<String> {
+    page(vec!["She's the best".into()], true)
+}
+
+fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool) -> Html<String> {
+    let top_nav: Vec<Box<dyn IntoHtml>> = vec![
         Box::new(DivBuilder::default()
             .element(Anchor("/".to_string(), ImgBuilder::default()
                 .uri("/logo.png".to_string())
@@ -73,14 +81,6 @@ fn page(mut content: Vec<Box<dyn IntoHtml>>) -> Html<String> {
                     .build().unwrap())
                 .build().unwrap()
         ),
-        Box::new(
-            DivBuilder::default()
-                .elements(content)
-                .attributes(AttributesBuilder::default()
-                    .attribute(CLASS(vec!["Content".to_string()]))
-                    .build().unwrap())
-                .build().unwrap()
-        )
     ];
     Html("<html>".to_string()
         + "<head>
@@ -91,15 +91,28 @@ fn page(mut content: Vec<Box<dyn IntoHtml>>) -> Html<String> {
           </head>"
         + "<body>"
         + DivBuilder::default()
-        .elements(page_components)
+        .element(DivBuilder::default()
+            .elements(top_nav)
+            .attributes(AttributesBuilder::default()
+                .attribute(CLASS(vec!["Container".to_string()]))
+                .build().unwrap())
+            .build().unwrap())
+        .element(DivBuilder::default()
+            .elements(content)
+            .attributes(AttributesBuilder::default()
+                .attribute(CLASS(vec!["Content".to_string()]))
+                .build().unwrap())
+            .build().unwrap())
+        .element(if include_footer { "<footer>©2024 Jack Klamer<p>Source: " } else { "" })
+        .element(if include_footer { Anchor("https://github.com/jklamer/klamer.dev".to_string(), "https://github.com/jklamer/klamer.dev") } else { Anchor("https://github.com/jklamer/klamer.dev".to_string(), "") })
         .attributes(AttributesBuilder::default()
-            .attribute(CLASS(vec!["Container".to_string(),"center".to_string()]))
-            .build().unwrap()).build().unwrap().html_string().as_str()
+            .attribute(CLASS(vec!["center".to_string()]))
+            .build().unwrap())
+        .build().unwrap()
+        .html_string().as_str()
         + "</body>"
         + "</html>")
 }
-
-
 
 
 async fn icon() -> &'static [u8] {
