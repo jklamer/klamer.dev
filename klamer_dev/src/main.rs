@@ -63,7 +63,10 @@ async fn home_page() -> Html<String> {
 
 // write axum handlers needed to set up a blog
 async fn blog_page() -> Html<String> {
-    let mut post_list_builder = UlistBuilder::default();
+    let mut post_list_builder = UlistBuilder::default()
+        .item_attributes(AttributesBuilder::default()
+            .attribute(CLASS(vec!["post-list".to_string()]))
+            .build().unwrap());
     for post_name in POST_NAMES.iter() {
         post_list_builder = post_list_builder.item(Anchor(format!("/blog/{post_name}"), *post_name))
     }
