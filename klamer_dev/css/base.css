@@ -293,6 +293,12 @@ footer {
     margin-block-start: 0;
 }
 
+.Content h2 {
+    font-family: Space Mono, monospace;
+    margin-top: 0.25em;
+    margin-block-start: 0;
+}
+
 .Content p .post-metadata {
     font-size: 0.75em;
     color: var(--color-gray-50);

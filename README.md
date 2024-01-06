@@ -1,2 +1,1 @@
-# klamer.dev
-Personal Blog and docs. 
+Idiot website speedrun

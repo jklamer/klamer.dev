@@ -95,6 +95,12 @@ impl IntoHtml for &str {
     }
 }
 
+impl IntoHtml for &&str {
+    fn html_string(&self) -> String {
+        self.to_string()
+    }
+}
+
 #[derive(Clone)]
 pub struct Header(pub String);
 

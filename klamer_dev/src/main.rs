@@ -1,3 +1,10 @@
+#[macro_use]
+extern crate lazy_static;
+
+use std::collections::HashMap;
+use std::iter::Iterator;
+
+use axum::extract::Path;
 use axum::response::Html;
 use axum::Router;
 use axum::routing::get;
@@ -6,28 +13,37 @@ use tracing_subscriber;
 
 use blog_files_macro::list_blog_files;
 
-use crate::html::{Anchor, AttributesBuilder, DivBuilder, Header1, ImgBuilder, IntoHtml, UlistBuilder};
+use crate::html::{Anchor, AttributesBuilder, DivBuilder, Header2, ImgBuilder, IntoHtml, UlistBuilder};
 use crate::html::Attribute::{CLASS, WIDTH};
+
 
 mod html;
 
 const ICON: &[u8] = include_bytes!("../assests/k_logo.dev.png");
 const LOGO: &[u8] = include_bytes!("../assests/klamer.dev.png");
 const BASE_CSS: &str = include_str!("../css/base.css");
-
+const FOUR04: &str = include_str!("../assests/404.html");
 const CONTENTS: &[(&'static str, &'static str)] = &list_blog_files!();
+
+lazy_static! {
+    static ref POST_NAMES: Vec<&'static str> = CONTENTS.iter().map(|b| get_post_name(b.0)).collect();
+    static ref POSTS: HashMap<&'static str, &'static str> = CONTENTS.iter().map(|b| (get_post_name(b.0), b.1)).collect();
+}
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
+    tracing::debug!("Initing server");
     let app = Router::new()
         .route("/", get(home_page))
         .route("/blog", get(blog_page))
+        .route("/blog/:post_name}", get(blog_post))
         .route("/annie", get(annie_page))
         .route("/favicon.png", get(icon))
         .route("/logo.png", get(logo))
         .route("/base.css", get(base_css))
-        .layer(TraceLayer::new_for_http());
+        .layer(TraceLayer::new_for_http())
+        .fallback(four04);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     tracing::debug!("Starting server");
@@ -37,17 +53,34 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
+fn get_post_name(file_name: &str) -> &str {
+    std::path::Path::new(file_name).file_name().unwrap().to_str().unwrap().trim_end_matches(".html")
+}
+
 async fn home_page() -> Html<String> {
     page(vec!["Home content".into()], false)
 }
 
 // write axum handlers needed to set up a blog
 async fn blog_page() -> Html<String> {
-    page(vec![Header1("My First Blog Post".to_string()).into(), "Blog content im going to make this super long as possible so that I can test this whole fucking shit. BLAH LBAFdfjskfjksjfslkj . I am so cool wow so insightful".into()], true)
+    let mut post_list_builder = UlistBuilder::default();
+    for post_name in POST_NAMES.iter() {
+        post_list_builder = post_list_builder.item(Anchor(format!("/blog/{post_name}"), *post_name))
+    }
+
+    page(vec![Header2("Posts".to_string()).into(), post_list_builder.build().unwrap().into()], true)
+}
+
+async fn blog_post(Path(post_name): Path<String>) -> Html<String> {
+    page(vec![POSTS.get(post_name.as_str()).unwrap_or(&FOUR04).into()], true)
 }
 
 async fn annie_page() -> Html<String> {
     page(vec!["She's the best".into()], true)
+}
+
+async fn four04() -> Html<String> {
+    page(vec![FOUR04.into()], false)
 }
 
 fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool) -> Html<String> {
@@ -125,4 +158,19 @@ async fn logo() -> &'static [u8] {
 
 async fn base_css() -> &'static str {
     BASE_CSS
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_post_name() {
+        assert_eq!(get_post_name("/somebullshit/postname"), "postname");
+        assert_eq!(get_post_name("/somebullshit/postname.html"), "postname");
+        assert_eq!(get_post_name("somebullshit/postname"), "postname");
+        assert_eq!(get_post_name("somebullshit/postname.html"), "postname");
+        assert_eq!(get_post_name("a/b/c/d/e/r/postname"), "postname");
+        assert_eq!(get_post_name("a/b/c/d/e/r/posthtml"), "posthtml");
+    }
 }
