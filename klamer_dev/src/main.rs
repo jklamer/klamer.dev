@@ -8,6 +8,8 @@ use axum::extract::Path;
 use axum::response::Html;
 use axum::Router;
 use axum::routing::get;
+use rustls_acme::caches::DirCache;
+use rustls_acme::AcmeConfig;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber;
 
@@ -23,11 +25,11 @@ const ICON: &[u8] = include_bytes!("../assests/k_logo.dev.png");
 const LOGO: &[u8] = include_bytes!("../assests/klamer.dev.png");
 const BASE_CSS: &str = include_str!("../css/base.css");
 const FOUR04: &str = include_str!("../assests/404.html");
-const CONTENTS: &[(&'static str, &'static str)] = &list_blog_files!();
+const BLOG_POST_CONTENT: &[(&'static str, &'static str)] = &list_blog_files!();
 
 lazy_static! {
-    static ref POST_NAMES: Vec<&'static str> = CONTENTS.iter().map(|b| get_post_name(b.0)).collect();
-    static ref POSTS: HashMap<&'static str, &'static str> = CONTENTS.iter().map(|b| (get_post_name(b.0), b.1)).collect();
+    static ref POST_NAMES: Vec<&'static str> = BLOG_POST_CONTENT.iter().map(|b| get_post_name(b.0)).collect();
+    static ref POSTS: HashMap<&'static str, &'static str> = BLOG_POST_CONTENT.iter().map(|b| (get_post_name(b.0), b.1)).collect();
 }
 
 #[tokio::main]
@@ -48,7 +50,7 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     tracing::debug!("Starting server");
     tokio::spawn(async move {
-        println!("Listening on http://localhost:3000");
+        tracing::debug!("Listening on http://localhost:3000");
     });
     axum::serve(listener, app).await.unwrap();
 }
