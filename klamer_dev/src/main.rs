@@ -3,7 +3,7 @@ extern crate lazy_static;
 
 use std::collections::HashMap;
 use std::iter::Iterator;
-use std::net::{Ipv6Addr, SocketAddr};
+use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
 
 use axum::extract::Path;
 use axum::response::Html;
@@ -73,7 +73,7 @@ async fn main() {
     if deployed_env {
         let args = TlsArgs::parse();
         tracing::debug!("Args: {:?}", args);
-        let addr = SocketAddr::from((Ipv6Addr::UNSPECIFIED, args.port));
+        let addr = SocketAddr::from((Ipv4Addr::UNSPECIFIED, args.port));
         tokio::spawn(async move {
             tracing::debug!("Running with TLS");
             tracing::debug!("Listening on 0.0.0.0:{:?}", args.port);
