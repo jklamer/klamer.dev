@@ -3,12 +3,14 @@ extern crate lazy_static;
 
 use std::collections::HashMap;
 use std::iter::Iterator;
+use std::net::{Ipv6Addr, SocketAddr};
 
 use axum::extract::Path;
 use axum::response::Html;
 use axum::Router;
 use axum::routing::get;
-use rustls_acme::caches::DirCache;
+use clap::Parser;
+use futures::StreamExt;
 use rustls_acme::AcmeConfig;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber;
@@ -17,7 +19,6 @@ use blog_files_macro::list_blog_files;
 
 use crate::html::{Anchor, AttributesBuilder, DivBuilder, Header2, ImgBuilder, IntoHtml, UlistBuilder};
 use crate::html::Attribute::{CLASS, WIDTH};
-
 
 mod html;
 
@@ -32,10 +33,31 @@ lazy_static! {
     static ref POSTS: HashMap<&'static str, &'static str> = BLOG_POST_CONTENT.iter().map(|b| (get_post_name(b.0), b.1)).collect();
 }
 
+#[derive(Parser, Debug)]
+struct TlsArgs {
+    /// Domains
+    #[clap(short, required = true)]
+    domains: Vec<String>,
+
+    /// Contact info
+    #[clap(short)]
+    email: Vec<String>,
+
+    /// Use Let's Encrypt production environment
+    /// (see https://letsencrypt.org/docs/staging-environment/)
+    #[clap(long)]
+    prod: bool,
+
+    #[clap(short, long, default_value = "443")]
+    port: u16,
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
     tracing::debug!("Initing server");
+    let deployed_env =  std::env::var("DEPLOYED_ENV").is_ok();
+    tracing::debug!("Deployed env: {}", deployed_env);
     let app = Router::new()
         .route("/", get(home_page))
         .route("/blog", get(blog_page))
@@ -47,12 +69,44 @@ async fn main() {
         .layer(TraceLayer::new_for_http())
         .fallback(four04);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     tracing::debug!("Starting server");
-    tokio::spawn(async move {
-        tracing::debug!("Listening on http://localhost:3000");
-    });
-    axum::serve(listener, app).await.unwrap();
+    if deployed_env {
+        let args = TlsArgs::parse();
+        tracing::debug!("Args: {:?}", args);
+        let addr = SocketAddr::from((Ipv6Addr::UNSPECIFIED, args.port));
+        tokio::spawn(async move {
+            tracing::debug!("Listening on 0.0.0.0:{:?}", args.port);
+        });
+        let mut state = AcmeConfig::new(args.domains)
+            .contact(args.email.iter().map(|e| format!("mailto:{}", e)))
+            .directory_lets_encrypt(args.prod)
+            .state();
+        let acceptor = state.axum_acceptor(state.default_rustls_config());
+        tokio::spawn(async move {
+            loop {
+                match state.next().await.unwrap() {
+                    Ok(ok) => {
+                        tracing::info!("event: {:?}", ok);
+                        log::info!("event: {:?}", ok)
+                    }
+                    Err(err) => {
+                        tracing::error!("event: {:?}", err);
+                        log::error!("error: {:?}", err)
+                    }
+                }
+            }
+        });
+        axum_server::bind(addr)
+            .acceptor(acceptor)
+            .serve(app.into_make_service())
+            .await.unwrap();
+    } else {
+        let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+        tokio::spawn(async move {
+            tracing::debug!("Listening on http://localhost:3000");
+        });
+        axum::serve(listener, app).await.unwrap();
+    }
 }
 
 fn get_post_name(file_name: &str) -> &str {

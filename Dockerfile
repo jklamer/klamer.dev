@@ -9,5 +9,6 @@ RUN yum update -y && yum install -y openssl-devel
 COPY --from=builder /usr/local/cargo/bin/klamer_dev /usr/local/bin/klamer_dev
 
 EXPOSE 3000
+EXPOSE 443
 
-CMD klamer_dev
+CMD klamer_dev -d klamer.dev
