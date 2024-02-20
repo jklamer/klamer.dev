@@ -69,12 +69,13 @@ async fn main() {
         .layer(TraceLayer::new_for_http())
         .fallback(four04);
 
-    tracing::debug!("Starting server");
+    tracing::info!("Starting server");
     if deployed_env {
         let args = TlsArgs::parse();
         tracing::debug!("Args: {:?}", args);
         let addr = SocketAddr::from((Ipv6Addr::UNSPECIFIED, args.port));
         tokio::spawn(async move {
+            tracing::debug!("Running with TLS");
             tracing::debug!("Listening on 0.0.0.0:{:?}", args.port);
         });
         let mut state = AcmeConfig::new(args.domains)
@@ -103,6 +104,7 @@ async fn main() {
     } else {
         let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
         tokio::spawn(async move {
+            tracing::debug!("Running without TLS");
             tracing::debug!("Listening on http://localhost:3000");
         });
         axum::serve(listener, app).await.unwrap();
