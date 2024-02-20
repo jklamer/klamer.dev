@@ -3,7 +3,7 @@ extern crate lazy_static;
 
 use std::collections::HashMap;
 use std::iter::Iterator;
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener};
 
 use axum::extract::Path;
 use axum::response::Html;
@@ -97,7 +97,7 @@ async fn main() {
                 }
             }
         });
-        axum_server::bind(addr)
+        axum_server::from_tcp(TcpListener::bind(addr).unwrap())
             .acceptor(acceptor)
             .serve(app.into_make_service())
             .await.unwrap();
