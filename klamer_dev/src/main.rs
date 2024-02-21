@@ -72,7 +72,7 @@ async fn main() {
     tracing::info!("Starting server");
     if deployed_env {
         let args = TlsArgs::parse();
-        tracing::debug!("Args: {:?}", args);
+        tracing::info!("Args: {:?}", args);
         let addr = SocketAddr::from((Ipv4Addr::UNSPECIFIED, args.port));
         tokio::spawn(async move {
             tracing::debug!("Running with TLS");
