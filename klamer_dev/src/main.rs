@@ -88,11 +88,9 @@ async fn main() {
                 match state.next().await.unwrap() {
                     Ok(ok) => {
                         tracing::info!("event: {:?}", ok);
-                        log::info!("event: {:?}", ok)
                     }
                     Err(err) => {
                         tracing::error!("event: {:?}", err);
-                        log::error!("error: {:?}", err)
                     }
                 }
             }
