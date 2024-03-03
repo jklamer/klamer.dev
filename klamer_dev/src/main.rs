@@ -3,11 +3,13 @@ extern crate lazy_static;
 
 use std::collections::HashMap;
 use std::iter::Iterator;
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener};
+use std::net::{Ipv4Addr, SocketAddr, TcpListener};
 
-use axum::extract::Path;
-use axum::response::Html;
-use axum::Router;
+use axum::{BoxError, Router};
+use axum::extract::{Host, Path};
+use axum::handler::HandlerWithoutStateExt;
+use axum::http::{StatusCode, Uri};
+use axum::response::{Html, Redirect};
 use axum::routing::get;
 use clap::Parser;
 use futures::StreamExt;
@@ -50,6 +52,9 @@ struct TlsArgs {
 
     #[clap(short, long, default_value = "443")]
     port: u16,
+
+    #[clap(long, default_value = "80")]
+    http_port: u16,
 }
 
 #[tokio::main]
@@ -95,6 +100,7 @@ async fn main() {
                 }
             }
         });
+        tokio::spawn(redirect_http_to_https(args.port, args.http_port));
         axum_server::from_tcp(TcpListener::bind(addr).unwrap())
             .acceptor(acceptor)
             .serve(app.into_make_service())
@@ -107,6 +113,41 @@ async fn main() {
         });
         axum::serve(listener, app).await.unwrap();
     }
+}
+
+#[allow(dead_code)]
+async fn redirect_http_to_https(https_port: u16, http_port: u16) {
+    fn make_https(host: String, uri: Uri, https_port: u16, http_port: u16) -> Result<Uri, BoxError> {
+        let mut parts = uri.into_parts();
+
+        parts.scheme = Some(axum::http::uri::Scheme::HTTPS);
+
+        if parts.path_and_query.is_none() {
+            parts.path_and_query = Some("/".parse().unwrap());
+        }
+
+        let https_host = host.replace(&http_port.to_string(), &https_port.to_string());
+        parts.authority = Some(https_host.parse()?);
+
+        Ok(Uri::from_parts(parts)?)
+    }
+
+    let redirect = move |Host(host): Host, uri: Uri| async move {
+        match make_https(host, uri, https_port, http_port) {
+            Ok(uri) => Ok(Redirect::permanent(&uri.to_string())),
+            Err(error) => {
+                tracing::warn!(%error, "failed to convert URI to HTTPS");
+                Err(StatusCode::BAD_REQUEST)
+            }
+        }
+    };
+
+    let addr = SocketAddr::from((Ipv4Addr::UNSPECIFIED, http_port));
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    tracing::debug!("listening on {}", listener.local_addr().unwrap());
+    axum::serve(listener, redirect.into_make_service())
+        .await
+        .unwrap();
 }
 
 fn get_post_name(file_name: &str) -> &str {
