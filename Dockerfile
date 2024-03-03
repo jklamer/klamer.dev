@@ -10,5 +10,6 @@ COPY --from=builder /usr/local/cargo/bin/klamer_dev /usr/local/bin/klamer_dev
 
 EXPOSE 3000
 EXPOSE 443
+EXPOSE 80
 
 CMD klamer_dev -d klamer.dev
