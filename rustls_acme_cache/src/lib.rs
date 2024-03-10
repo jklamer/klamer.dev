@@ -1,6 +1,6 @@
 use std::future::Future;
+
 use async_trait::async_trait;
-use aws_lc_rs::digest::{Context, SHA256};
 use aws_sdk_s3::Client;
 use aws_sdk_s3::error::SdkError;
 use aws_sdk_s3::operation::get_object::GetObjectError;
@@ -9,6 +9,7 @@ use aws_sdk_s3::primitives::{ByteStream, ByteStreamError};
 use base64::Engine;
 use base64::prelude::BASE64_URL_SAFE_NO_PAD;
 use rustls_acme::{AccountCache, CertCache};
+use sha2::{Digest, Sha256};
 
 pub struct AcmeS3Cache {
     bucket: String,
@@ -29,15 +30,15 @@ impl AcmeS3Cache {
         f(client).await
     }
 
-    //Copied directly from DirCache
+    //Copied directly from DirCache, for the most part
     fn cached_cert_file_name(domains: &[String], directory_url: impl AsRef<str>) -> String {
-        let mut ctx = Context::new(&SHA256);
+        let mut ctx = Sha256::default();
         for domain in domains {
-            ctx.update(domain.as_ref());
+            ctx.update(domain.as_bytes());
             ctx.update(&[0])
         }
         ctx.update(directory_url.as_ref().as_bytes());
-        let hash = BASE64_URL_SAFE_NO_PAD.encode(ctx.finish());
+        let hash = BASE64_URL_SAFE_NO_PAD.encode(ctx.finalize());
         format!("cached_cert_{}", hash)
     }
 }
