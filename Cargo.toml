@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "klamer_dev",
-    "blog_files_macro"
+    "blog_files_macro",
+    "rustls_acme_cache"
 ]
 resolver = "2"
 

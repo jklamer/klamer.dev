@@ -14,10 +14,12 @@ use axum::routing::get;
 use clap::Parser;
 use futures::StreamExt;
 use rustls_acme::AcmeConfig;
+use rustls_acme::caches::NoCache;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber;
 
 use blog_files_macro::list_blog_files;
+use rustls_acme_cache::{AcmeS3Cache, NoAccountAcmeS3Cache};
 
 use crate::html::{Anchor, AttributesBuilder, DivBuilder, Header2, ImgBuilder, IntoHtml, UlistBuilder};
 use crate::html::Attribute::{CLASS, WIDTH};
@@ -44,6 +46,9 @@ struct TlsArgs {
     /// Contact info
     #[clap(short)]
     email: Vec<String>,
+
+    #[clap(short, long, required = true)]
+    bucket: String,
 
     /// Use Let's Encrypt production environment
     /// (see https://letsencrypt.org/docs/staging-environment/)
@@ -83,9 +88,12 @@ async fn main() {
             tracing::debug!("Running with TLS");
             tracing::debug!("Listening on 0.0.0.0:{:?}", args.port);
         });
+        let cert_cache= AcmeS3Cache::new(args.bucket, "certs".to_string());
+
         let mut state = AcmeConfig::new(args.domains)
             .contact(args.email.iter().map(|e| format!("mailto:{}", e)))
             .directory_lets_encrypt(args.prod)
+            .cache_compose(cert_cache, NoAccountAcmeS3Cache)
             .state();
         let acceptor = state.axum_acceptor(state.default_rustls_config());
         tokio::spawn(async move {
