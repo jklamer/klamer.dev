@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 axum = { version = "0.7.2", features = ["http2"] }
 axum-htmx = "0.5.0"
-tokio = { features = ["macros", "rt-multi-thread"], version = "1.35.1" }
+tokio = { features = ["macros", "rt-multi-thread", "signal"], version = "1.35.1" }
 tower = "0.4.13"
 bytes = "1.5.0"
 http-body-util = "0.1.0"
@@ -25,3 +25,4 @@ clap = { version = "4.5.1", features = ["derive"] }
 log = "0.4.20"
 axum-server = { version = "0.6.0", features = ["tls-rustls"] }
 rustls_acme_cache = { path = "../rustls_acme_cache" }
+tower_governor = "0.3.2"

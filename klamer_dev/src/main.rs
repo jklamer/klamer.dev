@@ -4,6 +4,7 @@ extern crate lazy_static;
 use std::collections::HashMap;
 use std::iter::Iterator;
 use std::net::{Ipv4Addr, SocketAddr, TcpListener};
+use std::time::Duration;
 
 use axum::{BoxError, Router};
 use axum::extract::{Host, Path};
@@ -14,7 +15,9 @@ use axum::routing::get;
 use clap::Parser;
 use futures::StreamExt;
 use rustls_acme::AcmeConfig;
-use rustls_acme::caches::NoCache;
+use tokio::signal::ctrl_c;
+use tower_governor::governor::GovernorConfigBuilder;
+use tower_governor::GovernorLayer;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber;
 
@@ -47,6 +50,7 @@ struct TlsArgs {
     #[clap(short)]
     email: Vec<String>,
 
+    // cert store s3 bucket
     #[clap(short, long, required = true)]
     bucket: String,
 
@@ -68,6 +72,28 @@ async fn main() {
     tracing::debug!("Initing server");
     let deployed_env =  std::env::var("DEPLOYED_ENV").is_ok();
     tracing::debug!("Deployed env: {}", deployed_env);
+
+    // little rate limiting
+    // Allow bursts with up to 10 requests per IP address
+    // and replenishes one element every two seconds
+    let governor_conf = Box::new(
+        GovernorConfigBuilder::default()
+            .per_millisecond(200)
+            .burst_size(10)
+            .finish()
+            .unwrap(),
+    );
+
+    let governor_limiter = governor_conf.limiter().clone();
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(30)).await;
+            tracing::debug!("rate limiting storage size: {}", governor_limiter.len());
+            governor_limiter.retain_recent();
+        }
+    });
+
+
     let app = Router::new()
         .route("/", get(home_page))
         .route("/blog", get(blog_page))
@@ -76,8 +102,9 @@ async fn main() {
         .route("/favicon.png", get(icon))
         .route("/logo.png", get(logo))
         .route("/base.css", get(base_css))
-        .layer(TraceLayer::new_for_http())
-        .fallback(four04);
+        .fallback(four04)
+        .layer(GovernorLayer{ config: Box::leak(governor_conf)})
+        .layer(TraceLayer::new_for_http());
 
     tracing::info!("Starting server");
     if deployed_env {
@@ -111,7 +138,7 @@ async fn main() {
         tokio::spawn(redirect_http_to_https(args.port, args.http_port));
         axum_server::from_tcp(TcpListener::bind(addr).unwrap())
             .acceptor(acceptor)
-            .serve(app.into_make_service())
+            .serve(app.into_make_service_with_connect_info::<SocketAddr>())
             .await.unwrap();
     } else {
         let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
@@ -119,8 +146,15 @@ async fn main() {
             tracing::debug!("Running without TLS");
             tracing::debug!("Listening on http://localhost:3000");
         });
-        axum::serve(listener, app).await.unwrap();
+        axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
+            .with_graceful_shutdown(shutdown_signal_http())
+            .await.unwrap();
     }
+}
+
+async fn shutdown_signal_http() {
+    ctrl_c().await.expect("failed to install ctrl+c handler");
+    tracing::info!("Shutting down signal received, shutting down server");
 }
 
 #[allow(dead_code)]
@@ -154,6 +188,7 @@ async fn redirect_http_to_https(https_port: u16, http_port: u16) {
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, redirect.into_make_service())
+        .with_graceful_shutdown(shutdown_signal_http())
         .await
         .unwrap();
 }
