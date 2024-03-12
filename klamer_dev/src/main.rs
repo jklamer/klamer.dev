@@ -75,7 +75,7 @@ async fn main() {
 
     // little rate limiting
     // Allow bursts with up to 10 requests per IP address
-    // and replenishes one element every two seconds
+    // and replenishes one element every two hundred millis
     let governor_conf = Box::new(
         GovernorConfigBuilder::default()
             .per_millisecond(200)
