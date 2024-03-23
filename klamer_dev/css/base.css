@@ -212,6 +212,12 @@ html {
     background-color: var(--color-tan-background-color);
 }
 
+@media all and (max-width:1080px) {
+    html {
+        font-size: 28px;
+    }
+}
+
 a {
     text-decoration:none;
     color:inherit;
@@ -227,11 +233,19 @@ a {
     padding: 10px;
 }
 
+@media all and (max-width:1080px) {
+    .center {
+        margin: auto;
+        width: 85vw;
+        padding: 0.6em;
+    }
+}
+
 .container {
     display: grid;
     grid-template-columns: 1fr 7fr;
     grid-template-rows: 1fr;
-    gap: 10px 10px;
+    gap: 0.6em 0.6em;
     grid-template-areas:
     "Logo Sections";
     font-family: Space Mono, monospace;

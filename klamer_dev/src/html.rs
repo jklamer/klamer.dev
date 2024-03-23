@@ -33,6 +33,12 @@ pub(crate) enum Attribute {
     WIDTH(u32),
     HEIGHT(u32),
     MARGIN(u32),
+    WidthPercent(u32),
+    HeightPercent(u32),
+    WidthEm(u32),
+    HeightEm(u32),
+    WidthVw(u32),
+    HeightVw(u32),
 }
 
 impl Attribute {
@@ -42,6 +48,12 @@ impl Attribute {
             Attribute::WIDTH(u) => format!("width=\"{}\"", u),
             Attribute::HEIGHT(u) => format!("height=\"{}\"", u),
             Attribute::MARGIN(u) => format!("margin=\"{}\"", u),
+            Attribute::WidthPercent(u) => format!("width=\"{}%\"", u),
+            Attribute::HeightPercent(u) => format!("height=\"{}%\"", u),
+            Attribute::WidthEm(u) => format!("width=\"{}em\"", u),
+            Attribute::HeightEm(u) => format!("height=\"{}em\"", u),
+            Attribute::WidthVw(u) => format!("width=\"{}vw\"", u),
+            Attribute::HeightVw(u) => format!("height=\"{}vw\"", u),
         }
     }
 }

@@ -25,7 +25,7 @@ use blog_files_macro::list_blog_files;
 use rustls_acme_cache::{AcmeS3Cache, NoAccountAcmeS3Cache};
 
 use crate::html::{Anchor, AttributesBuilder, DivBuilder, Header2, ImgBuilder, IntoHtml, UlistBuilder};
-use crate::html::Attribute::{CLASS, WIDTH};
+use crate::html::Attribute::{CLASS, HeightEm, HeightPercent, WIDTH, WidthPercent, WidthVw};
 
 mod html;
 
@@ -233,7 +233,7 @@ fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool) -> Html<String> {
                 .uri("/logo.png".to_string())
                 .alt_text("Klamer.dev logo".to_string())
                 .attributes(AttributesBuilder::default()
-                    .attribute(WIDTH(150))
+                    .attribute(WidthVw(150))
                     .build().unwrap())
                 .build().unwrap()))
             .attributes(AttributesBuilder::default()
