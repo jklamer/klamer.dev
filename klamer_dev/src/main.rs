@@ -3,7 +3,7 @@ extern crate lazy_static;
 
 use std::collections::HashMap;
 use std::iter::Iterator;
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV6, TcpListener};
 use std::time::Duration;
 
 use axum::{BoxError, Router};
@@ -118,8 +118,6 @@ async fn main() {
     if deployed_env {
         let args = TlsArgs::parse();
         tracing::info!("Args: {:?}", args);
-        let addr = if ipv6_args.use_ipv6 { SocketAddr::from((Ipv6Addr::UNSPECIFIED, args.port)) }
-        else { SocketAddr::from((Ipv4Addr::UNSPECIFIED, args.port)) };
         tokio::spawn(async move {
             tracing::debug!("Running with TLS");
             tracing::debug!("Listening on 0.0.0.0:{:?}", args.port);
@@ -145,13 +143,14 @@ async fn main() {
             }
         });
         tokio::spawn(redirect_http_to_https(args.port, args.http_port, ipv6_args.use_ipv6));
-        axum_server::from_tcp(TcpListener::bind(addr).unwrap())
+        let addr = [SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), args.port), SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), args.port)];
+        axum_server::from_tcp(TcpListener::bind(&addr[..]).unwrap())
             .acceptor(acceptor)
             .serve(app.into_make_service_with_connect_info::<SocketAddr>())
             .await.unwrap();
     } else {
-        let loopback_addr = if ipv6_args.use_ipv6 { "::0:3000" } else { "0.0.0.0:3000" };
-        let listener = tokio::net::TcpListener::bind(loopback_addr).await.unwrap();
+        let loopback_addr = [SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED),3000), SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), 3000)];
+        let listener = tokio::net::TcpListener::bind(&loopback_addr[..]).await.unwrap();
         tokio::spawn(async move {
             tracing::debug!("Running without TLS");
             tracing::debug!("Listening on http://localhost:3000");
@@ -194,8 +193,8 @@ async fn redirect_http_to_https(https_port: u16, http_port: u16, use_ipv6: bool)
         }
     };
 
-    let addr = if use_ipv6 { SocketAddr::from((Ipv6Addr::UNSPECIFIED, http_port)) } else { SocketAddr::from((Ipv4Addr::UNSPECIFIED, http_port)) };
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    let addr = [SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), http_port), SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), http_port)];
+    let listener = tokio::net::TcpListener::bind(&addr[..]).await.unwrap();
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, redirect.into_make_service())
         .with_graceful_shutdown(shutdown_signal_http())

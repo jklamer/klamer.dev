@@ -1,4 +1,4 @@
-FROM rust:1.83 as builder
+FROM rust:1.83 AS builder
 WORKDIR /usr/src
 COPY . .
 RUN cargo install --path ./klamer_dev
