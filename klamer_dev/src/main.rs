@@ -66,13 +66,6 @@ struct TlsArgs {
     http_port: u16,
 }
 
-
-#[derive(Parser, Debug)]
-struct IPv6Args {
-    #[clap(long = "v6", default_value = "false")]
-    use_ipv6: bool
-}
-
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
@@ -114,7 +107,6 @@ async fn main() {
         .layer(TraceLayer::new_for_http());
 
     tracing::info!("Starting server");
-    let ipv6_args = IPv6Args::parse();
     if deployed_env {
         let args = TlsArgs::parse();
         tracing::info!("Args: {:?}", args);
@@ -142,7 +134,7 @@ async fn main() {
                 }
             }
         });
-        tokio::spawn(redirect_http_to_https(args.port, args.http_port, ipv6_args.use_ipv6));
+        tokio::spawn(redirect_http_to_https(args.port, args.http_port));
         let addr = [SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), args.port), SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), args.port)];
         axum_server::from_tcp(TcpListener::bind(&addr[..]).unwrap())
             .acceptor(acceptor)
@@ -167,7 +159,7 @@ async fn shutdown_signal_http() {
 }
 
 #[allow(dead_code)]
-async fn redirect_http_to_https(https_port: u16, http_port: u16, use_ipv6: bool) {
+async fn redirect_http_to_https(https_port: u16, http_port: u16) {
     fn make_https(host: String, uri: Uri, https_port: u16, http_port: u16) -> Result<Uri, BoxError> {
         let mut parts = uri.into_parts();
 
