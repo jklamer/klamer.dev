@@ -62,8 +62,7 @@ impl CertCache for AcmeS3Cache {
                 .bucket(&self.bucket)
                 .key(&format!("{}/{}", &self.prefix, file_name))
                 .send()
-        })
-            .await
+        }).await
             .map_err(MyErrors::GetObjectError)?;
 
         get_object_output.body.collect().await.map(|aggregated_bytes| aggregated_bytes.to_vec())
@@ -80,8 +79,7 @@ impl CertCache for AcmeS3Cache {
                 .key(&format!("{}/{}", &self.prefix, file_name))
                 .body(ByteStream::from(Vec::from(cert)))
                 .send()
-        })
-            .await.map(|_| ())
+        }).await.map(|_| ())
             .map_err(MyErrors::PutObjectError)
     }
 }
