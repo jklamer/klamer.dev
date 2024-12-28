@@ -2,6 +2,7 @@
 extern crate lazy_static;
 
 use std::collections::HashMap;
+use std::future::Future;
 use std::iter::Iterator;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV6, TcpListener};
 use std::time::Duration;
@@ -12,9 +13,11 @@ use axum::handler::HandlerWithoutStateExt;
 use axum::http::{StatusCode, Uri};
 use axum::response::{Html, Redirect};
 use axum::routing::get;
+use axum_server::Handle;
 use clap::Parser;
 use futures::StreamExt;
 use rustls_acme::AcmeConfig;
+use tokio::signal;
 use tokio::signal::ctrl_c;
 use tower_governor::governor::GovernorConfigBuilder;
 use tower_governor::GovernorLayer;
@@ -134,11 +137,13 @@ async fn main() {
                 }
             }
         });
-        tokio::spawn(redirect_http_to_https(args.port, args.http_port));
+        let handle = Handle::new();
+        tokio::spawn(redirect_http_to_https(args.port, args.http_port, shutdown_signal(Some(handle.clone()))));
         let addr = [SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), args.port), SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), args.port)];
-        axum_server::from_tcp(TcpListener::bind(&addr[..]).unwrap())
+        let server = axum_server::from_tcp(TcpListener::bind(&addr[..]).unwrap())
             .acceptor(acceptor)
-            .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+            .handle(handle);
+        server.serve(app.into_make_service_with_connect_info::<SocketAddr>())
             .await.unwrap();
     } else {
         let loopback_addr = [SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED),3000), SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), 3000)];
@@ -148,18 +153,40 @@ async fn main() {
             tracing::debug!("Listening on http://localhost:3000");
         });
         axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
-            .with_graceful_shutdown(shutdown_signal_http())
+            .with_graceful_shutdown(shutdown_signal(None))
             .await.unwrap();
     }
 }
 
-async fn shutdown_signal_http() {
-    ctrl_c().await.expect("failed to install ctrl+c handler");
-    tracing::info!("Shutting down signal received, shutting down server");
+async fn shutdown_signal(handle: Option<Handle>) {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {handle.map(|h| h.graceful_shutdown(Some(Duration::from_secs(5)))).unwrap_or(())},
+        _ = terminate => {handle.map(|h| h.shutdown()).unwrap_or(())},
+    }
 }
 
 #[allow(dead_code)]
-async fn redirect_http_to_https(https_port: u16, http_port: u16) {
+async fn redirect_http_to_https<F>(https_port: u16, http_port: u16, signal: F)
+where
+    F: Future<Output = ()> + Send + 'static
+{
     fn make_https(host: String, uri: Uri, https_port: u16, http_port: u16) -> Result<Uri, BoxError> {
         let mut parts = uri.into_parts();
 
@@ -189,7 +216,7 @@ async fn redirect_http_to_https(https_port: u16, http_port: u16) {
     let listener = tokio::net::TcpListener::bind(&addr[..]).await.unwrap();
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, redirect.into_make_service())
-        .with_graceful_shutdown(shutdown_signal_http())
+        .with_graceful_shutdown(signal)
         .await
         .unwrap();
 }

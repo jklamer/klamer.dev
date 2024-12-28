@@ -25,4 +25,4 @@ aws ecr get-login-password --region us-east-2 | docker login --username AWS --pa
 
 GIT_COMMIT=$(git rev-parse --short HEAD)
 
-docker buildx build . -t $REPO:$GIT_COMMIT --platform linux/arm64 --push
+docker buildx build . -t $REPO:$GIT_COMMIT -t  $REPO:"latest" --platform linux/arm64 --push
