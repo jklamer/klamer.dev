@@ -6,7 +6,7 @@ on:
       - main
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-main
   cancel-in-progress: false
 
 jobs:
