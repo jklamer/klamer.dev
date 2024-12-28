@@ -23,7 +23,7 @@ jobs:
           aws-region: us-east-2
 
       - name: Build and Push
-        run: ./build.sh
+        run: sh build.sh
 
   deploy:
     needs: build
