@@ -19,6 +19,7 @@ jobs:
       - name: Install Docker
         run: |
           brew install --cask docker
+          brew install docker-buildx
 
       - name: Verify Buildx version
         run: docker buildx version
