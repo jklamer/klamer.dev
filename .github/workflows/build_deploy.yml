@@ -1,0 +1,45 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: build_deploy
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::590183777943:role/build_ecr
+          aws-region: us-east-2
+
+      - name: Build and Push
+        run: ./build.sh
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: build_deploy
+    steps:
+      - name: Setup SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key
+          chmod 600 ec2_key
+
+      - name: Run Docker Commands on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ec2_key ec2-user@${{ secrets.EC2_HOST }} << EOF
+            docker pull ${{ secrets.REPO }}:"latest"
+            docker stop klamer_dev || true
+            docker rm klamer_dev || true
+            docker run -d --name  klamer_dev --env RUST_LOG=INFO --env DEPLOYED_ENV=AWS -p 80:80 -p 443:443 ${{ secrets.REPO }}:"latest" klamer_dev -d klamer.dev -e ${{ secrets.EMAIL }} -b my-prod-certs --prod
+          EOF
