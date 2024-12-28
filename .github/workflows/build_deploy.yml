@@ -22,8 +22,11 @@ jobs:
           role-to-assume: arn:aws:iam::590183777943:role/build_ecr
           aws-region: us-east-2
 
+      - name: Which Docker
+        run: which docker
+
       - name: Build and Push
-        run: sh build.sh
+        run: build.sh
 
   deploy:
     needs: build
