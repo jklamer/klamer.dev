@@ -10,12 +10,6 @@ if ! docker info > /dev/null 2>&1; then
   exit 1
 fi
 
-# check if AWS_PROFILE is set
-if [[ -z "${AWS_PROFILE}" ]]; then
-  echo "AWS_PROFILE is not set"
-  exit 1
-fi
-
 if [[ -z "${REPO}" ]]; then
   echo "REPO is not set"
   exit 1
