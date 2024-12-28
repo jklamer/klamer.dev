@@ -13,9 +13,6 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Install zsh
-        run: sudo apt-get update; sudo apt-get install zsh
-
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -28,7 +25,7 @@ jobs:
       - name: Build and Push
         env:
           REPO: ${{ secrets.REPO }}
-        run: zsh build.sh
+        run: sh build.sh
 
   deploy:
     needs: build
