@@ -26,7 +26,7 @@ jobs:
         run: which docker
 
       - name: Build and Push
-        run: build.sh
+        run: zsh build.sh
 
   deploy:
     needs: build
