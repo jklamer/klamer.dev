@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -51,4 +55,5 @@ jobs:
             docker stop klamer_dev || true
             docker rm klamer_dev || true
             docker run -d --name  klamer_dev --env RUST_LOG=INFO --env DEPLOYED_ENV=AWS -p 80:80 -p 443:443 ${{ secrets.REPO }}:"latest" klamer_dev -d klamer.dev -e ${{ secrets.EMAIL }} -b my-prod-certs --prod
+            docker image prune -a
           EOF
