@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     environment: build_deploy
     permissions:
       id-token: write
@@ -35,7 +35,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     environment: build_deploy
     steps:
       - name: Setup SSH Key
