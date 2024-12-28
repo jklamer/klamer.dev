@@ -26,6 +26,8 @@ jobs:
           aws-region: us-east-2
 
       - name: Build and Push
+        env:
+          REPO: ${{ secrets.REPO }}
         run: zsh build.sh
 
   deploy:
