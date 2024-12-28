@@ -19,7 +19,9 @@ jobs:
       - name: Install Docker
         run: |
           brew install --cask docker
-          brew install docker-buildx
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Verify Buildx version
         run: docker buildx version
