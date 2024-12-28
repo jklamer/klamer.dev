@@ -19,6 +19,7 @@ jobs:
       - name: Install Docker
         run: |
           brew install --cask docker
+          colima start
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
