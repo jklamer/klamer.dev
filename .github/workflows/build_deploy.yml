@@ -19,19 +19,6 @@ jobs:
       - name: Install Docker
         run: |
           brew install --cask docker
-          brew install colima
-          colima start
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Verify Buildx version
-        run: docker buildx version
-#      - name: Set up QEMU
-#        uses: docker/setup-qemu-action@v3
-#
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -42,6 +29,7 @@ jobs:
       - name: Build and Push
         env:
           REPO: ${{ secrets.REPO }}
+          DOCKER_BUILD: YES
         run: sh build.sh
 
   deploy:
