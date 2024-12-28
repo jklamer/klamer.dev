@@ -18,8 +18,4 @@ fi
 aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin $REPO
 
 GIT_COMMIT=$(git rev-parse --short HEAD)
-if [[ -z "${DOCKER_BUILD}" ]]; then
-  docker build . -t $REPO:$GIT_COMMIT -t  $REPO:"latest" --push
-else
-  docker buildx build . -t $REPO:$GIT_COMMIT -t  $REPO:"latest" --platform linux/arm64 --push
-fi
+docker buildx build . -t $REPO:$GIT_COMMIT -t  $REPO:"latest" --platform linux/arm64 --push
