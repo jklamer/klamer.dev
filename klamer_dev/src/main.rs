@@ -226,7 +226,7 @@ fn get_post_name(file_name: &str) -> &str {
 }
 
 async fn home_page() -> Html<String> {
-    page(vec!["Home content".into()], false)
+    page(vec!["Home content, deployed automatically!".into()], false)
 }
 
 // write axum handlers needed to set up a blog
