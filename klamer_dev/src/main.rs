@@ -35,6 +35,7 @@ mod html;
 const ICON: &[u8] = include_bytes!("../assests/k_logo.dev.png");
 const LOGO: &[u8] = include_bytes!("../assests/klamer.dev.png");
 const BASE_CSS: &str = include_str!("../css/base.css");
+const HOME: &str = include_str!("../assests/home.html");
 const FOUR04: &str = include_str!("../assests/404.html");
 const BLOG_POST_CONTENT: &[(&'static str, &'static str)] = &list_blog_files!();
 
@@ -226,7 +227,7 @@ fn get_post_name(file_name: &str) -> &str {
 }
 
 async fn home_page() -> Html<String> {
-    page(vec!["Home content, deployed automatically!".into()], false)
+    page(vec![HOME.into()], false)
 }
 
 // write axum handlers needed to set up a blog
