@@ -183,6 +183,7 @@ pre[class*="language-diff-"] {
 :root {
     --color-gray-20: #e0e0e0;
     --color-gray-50: #c0c0c0;
+    --color-gray-70: #777;
     --color-gray-90: #333;
 
     --color-tan-background-color: #ede4ca;
@@ -318,9 +319,10 @@ footer {
     font-family: Space Mono, monospace;
     margin-top: 0.25em;
     margin-block-start: 0;
+    color: var(--color-gray-70);
 }
 
 .Content p .post-metadata {
     font-size: 0.75em;
-    color: var(--color-gray-50);
+    color: var(--color-gray-20);
 }

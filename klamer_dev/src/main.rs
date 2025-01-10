@@ -5,14 +5,16 @@ use std::collections::HashMap;
 use std::future::Future;
 use std::iter::Iterator;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV6, TcpListener};
+use std::sync::Arc;
 use std::time::Duration;
 
 use axum::{BoxError, Router};
-use axum::extract::{Host, Path};
+use axum::extract::Path;
 use axum::handler::HandlerWithoutStateExt;
 use axum::http::{StatusCode, Uri};
 use axum::response::{Html, Redirect};
 use axum::routing::get;
+use axum_extra::extract::Host;
 use axum_server::Handle;
 use clap::Parser;
 use futures::StreamExt;
@@ -80,7 +82,7 @@ async fn main() {
     // little rate limiting
     // Allow bursts with up to 10 requests per IP address
     // and replenishes one element every two hundred millis
-    let governor_conf = Box::new(
+    let governor_conf = Arc::new(
         GovernorConfigBuilder::default()
             .per_millisecond(200)
             .burst_size(10)
@@ -101,13 +103,13 @@ async fn main() {
     let app = Router::new()
         .route("/", get(home_page))
         .route("/blog", get(blog_page))
-        .route("/blog/:post_name}", get(blog_post))
+        .route("/blog/{post_name}", get(blog_post))
         .route("/annie", get(annie_page))
         .route("/favicon.png", get(icon))
         .route("/logo.png", get(logo))
         .route("/base.css", get(base_css))
         .fallback(four04)
-        .layer(GovernorLayer{ config: Box::leak(governor_conf)})
+        .layer(GovernorLayer{ config: governor_conf})
         .layer(TraceLayer::new_for_http());
 
     tracing::info!("Starting server");
@@ -161,7 +163,7 @@ async fn main() {
 
 async fn shutdown_signal(handle: Option<Handle>) {
     let ctrl_c = async {
-        signal::ctrl_c()
+        ctrl_c()
             .await
             .expect("failed to install Ctrl+C handler");
     };
