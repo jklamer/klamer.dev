@@ -39,7 +39,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04-arm
     environment: build_deploy
     steps:
       - name: Setup SSH Key
