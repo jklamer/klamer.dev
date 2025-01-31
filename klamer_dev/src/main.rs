@@ -109,7 +109,7 @@ async fn main() {
         .route("/logo.png", get(logo))
         .route("/base.css", get(base_css))
         .fallback(four04)
-        .layer(GovernorLayer{ config: governor_conf})
+        .layer(GovernorLayer{ config: governor_conf })
         .layer(TraceLayer::new_for_http());
 
     tracing::info!("Starting server");
@@ -310,7 +310,7 @@ fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool) -> Html<String> {
                 .attribute(CLASS(vec!["Content".to_string()]))
                 .build().unwrap())
             .build().unwrap())
-        .element(if include_footer { "<footer>©2024 Jack Klamer<p>Source: " } else { "" })
+        .element(if include_footer { "<footer>©2025 Jack Klamer<p>Source: " } else { "" })
         .element(if include_footer { Anchor("https://github.com/jklamer/klamer.dev".to_string(), "https://github.com/jklamer/klamer.dev") } else { Anchor("https://github.com/jklamer/klamer.dev".to_string(), "") })
         .attributes(AttributesBuilder::default()
             .attribute(CLASS(vec!["center".to_string()]))
