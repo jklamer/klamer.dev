@@ -4,21 +4,21 @@ extern crate lazy_static;
 use std::collections::HashMap;
 use std::future::Future;
 use std::iter::Iterator;
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV6, TcpListener};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener};
 use std::sync::Arc;
 use std::time::Duration;
 
-use axum::{BoxError, Router};
-use axum::extract::Path;
-use axum::handler::HandlerWithoutStateExt;
-use axum::http::{StatusCode, Uri};
-use axum::response::{Html, Redirect};
+use axum::extract::{Path, State};
+use axum::http::{header, HeaderValue, StatusCode, Uri};
+use axum::response::{Html, IntoResponse, Redirect};
 use axum::routing::get;
+use axum::{BoxError, Router};
 use axum_extra::extract::Host;
 use axum_server::Handle;
 use clap::Parser;
 use futures::StreamExt;
-use rustls_acme::AcmeConfig;
+use rustls_acme::UseChallenge::Http01;
+use rustls_acme::{AcmeConfig, ResolvesServerCertAcme};
 use tokio::signal;
 use tokio::signal::ctrl_c;
 use tower_governor::governor::GovernorConfigBuilder;
@@ -29,8 +29,8 @@ use tracing_subscriber;
 use blog_files_macro::list_blog_files;
 use rustls_acme_cache::{AcmeS3Cache, NoAccountAcmeS3Cache};
 
+use crate::html::Attribute::{WidthVw, CLASS};
 use crate::html::{Anchor, AttributesBuilder, DivBuilder, Header2, ImgBuilder, IntoHtml, UlistBuilder};
-use crate::html::Attribute::{CLASS, HeightEm, HeightPercent, WIDTH, WidthPercent, WidthVw};
 
 mod html;
 
@@ -126,8 +126,13 @@ async fn main() {
             .contact(args.email.iter().map(|e| format!("mailto:{}", e)))
             .directory_lets_encrypt(args.prod)
             .cache_compose(cert_cache, NoAccountAcmeS3Cache)
+            .challenge_type(Http01)
             .state();
         let acceptor = state.axum_acceptor(state.default_rustls_config());
+
+        let handle = Handle::new();
+        tokio::spawn(handle_http01_challenge_or_redirect(args.port, args.http_port, shutdown_signal(Some(handle.clone())), state.resolver().clone()));
+
         tokio::spawn(async move {
             loop {
                 match state.next().await.unwrap() {
@@ -140,8 +145,6 @@ async fn main() {
                 }
             }
         });
-        let handle = Handle::new();
-        tokio::spawn(redirect_http_to_https(args.port, args.http_port, shutdown_signal(Some(handle.clone()))));
         let addr = [SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), args.port), SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), args.port)];
         let server = axum_server::from_tcp(TcpListener::bind(&addr[..]).unwrap())
             .acceptor(acceptor)
@@ -186,26 +189,11 @@ async fn shutdown_signal(handle: Option<Handle>) {
 }
 
 #[allow(dead_code)]
-async fn redirect_http_to_https<F>(https_port: u16, http_port: u16, signal: F)
+async fn handle_http01_challenge_or_redirect<F>(https_port: u16, http_port: u16, signal: F, resolver: Arc<ResolvesServerCertAcme>)
 where
     F: Future<Output = ()> + Send + 'static
 {
-    fn make_https(host: String, uri: Uri, https_port: u16, http_port: u16) -> Result<Uri, BoxError> {
-        let mut parts = uri.into_parts();
-
-        parts.scheme = Some(axum::http::uri::Scheme::HTTPS);
-
-        if parts.path_and_query.is_none() {
-            parts.path_and_query = Some("/".parse().unwrap());
-        }
-
-        let https_host = host.replace(&http_port.to_string(), &https_port.to_string());
-        parts.authority = Some(https_host.parse()?);
-
-        Ok(Uri::from_parts(parts)?)
-    }
-
-    let redirect = move |Host(host): Host, uri: Uri| async move {
+    let redirect_handler = move |Host(host): Host, uri: Uri| async move {
         match make_https(host, uri, https_port, http_port) {
             Ok(uri) => Ok(Redirect::permanent(&uri.to_string())),
             Err(error) => {
@@ -214,14 +202,44 @@ where
             }
         }
     };
+    let challenge_or_redirect = Router::new()
+        .route("/.well-known/acme-challenge/{challenge_token}",
+               get(|State(resolver): State<Arc<ResolvesServerCertAcme>>, Path(challenge_token): Path<String>| async move {
+                   log::debug!("Received challenge for token {}", challenge_token);
+                   match resolver.get_http_01_key_auth(&challenge_token) {
+                       None => (StatusCode::NOT_FOUND,).into_response(),
+                       Some(key_auth) => {
+                           (StatusCode::OK,
+                            [(header::CONTENT_TYPE, HeaderValue::from_static("application/octet-stream"))],
+                            key_auth,).into_response()
+                       }
+                   }
+               }))
+        .fallback(redirect_handler)
+        .with_state(resolver.clone());
 
     let addr = [SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), http_port), SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), http_port)];
     let listener = tokio::net::TcpListener::bind(&addr[..]).await.unwrap();
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, redirect.into_make_service())
+    axum::serve(listener, challenge_or_redirect.into_make_service())
         .with_graceful_shutdown(signal)
         .await
         .unwrap();
+}
+
+fn make_https(host: String, uri: Uri, https_port: u16, http_port: u16) -> Result<Uri, BoxError> {
+    let mut parts = uri.into_parts();
+
+    parts.scheme = Some(axum::http::uri::Scheme::HTTPS);
+
+    if parts.path_and_query.is_none() {
+        parts.path_and_query = Some("/".parse().unwrap());
+    }
+
+    let https_host = host.replace(&http_port.to_string(), &https_port.to_string());
+    parts.authority = Some(https_host.parse()?);
+
+    Ok(Uri::from_parts(parts)?)
 }
 
 fn get_post_name(file_name: &str) -> &str {
