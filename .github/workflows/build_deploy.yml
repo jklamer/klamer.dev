@@ -49,7 +49,7 @@ jobs:
 
       - name: Run Docker Commands on EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ec2_key ec2-user@${{ secrets.EC2_HOST }} << EOF
+          ssh -6 -o StrictHostKeyChecking=no -i ec2_key ec2-user@${{ secrets.EC2_HOST }} << EOF
             aws ecr get-login-password --region "us-east-2" | docker login --username AWS --password-stdin ${{ secrets.REPO }}
             docker pull ${{ secrets.REPO }}:"latest"
             docker stop klamer_dev || true
