@@ -30,6 +30,12 @@ impl AcmeS3Cache {
         f(client).await
     }
 
+    async fn get_client() -> Client
+    {
+        let config = aws_config::load_from_env().await;
+        Client::new(&config)
+    }
+
     //Copied directly from DirCache, for the most part
     fn cached_cert_file_name(domains: &[String], directory_url: impl AsRef<str>) -> String {
         let mut ctx = Sha256::default();
@@ -57,12 +63,11 @@ impl CertCache for AcmeS3Cache {
 
     async fn load_cert(&self, domains: &[String], directory_url: &str) -> Result<Option<Vec<u8>>, Self::EC> {
         let file_name = Self::cached_cert_file_name(&domains, directory_url);
-        let get_object_output = Self::use_client(|client| {
-            client.get_object()
-                .bucket(&self.bucket)
-                .key(&format!("{}/{}", &self.prefix, file_name))
-                .send()
-        }).await
+        let get_object_output = Self::get_client().await
+            .get_object()
+            .bucket(&self.bucket)
+            .key(&format!("{}/{}", &self.prefix, file_name))
+            .send().await
             .map_err(MyErrors::GetObjectError)?;
 
         get_object_output.body.collect().await.map(|aggregated_bytes| aggregated_bytes.to_vec())
