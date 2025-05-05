@@ -4,104 +4,117 @@
 <p>
 I watch a lot of football, and a little basketball. I guess that makes me like <u><a
         href="https://www.forbes.com/sites/bradadgate/2025/01/08/in-2024-nfl-games-accounted-for-72-of-the-100-most-watched-telecasts/">most</a></u>
-    <u><a href="https://www.dailywire.com/news/nba-ratings-tank-while-the-nfl-jumps-whats-behind-the-viewership-contrast">Americans</a></u>. But unlike most Americans, I spend a lot of time thinking about how to best structure and model data (everyone needs hobbies). So when I saw that the that the Indiana Pacers recently achieved
-<u><a href="https://www.instagram.com/pacers/p/DElnGVGsQqh/">“the lowest possible jersey number lineup”</a></u>, I noticed something weird. Now for those playing along at home, a basketball team has five players on the court at once (Yeah I know ball), so you might think that the record setting sum in question is 15 (1+2+3+4+5) or maybe 10 (0+1+2+3+4), but instead, it was 6. How is this possible? The team included Tyrese Maxey wearing “number” 0 and Reggie Jackson wearing “number” 00.
+    <u><a href="https://www.dailywire.com/news/nba-ratings-tank-while-the-nfl-jumps-whats-behind-the-viewership-contrast">Americans</a></u>. But unlike most Americans, I spend a lot of time thinking about how to best structure and model data (everyone needs hobbies). So when I saw that the Indiana Pacers recently achieved
+<u><a href="https://www.instagram.com/pacers/p/DElnGVGsQqh/">“the lowest possible jersey number lineup,”</a></u> I noticed something weird. Now, for those playing along at home, a basketball team has five players on the court at once (Yeah I know ball), so you might think that the record setting sum in question is 15 (1+2+3+4+5) or maybe 10 (0+1+2+3+4), but instead, it was 6. How is this possible? The team included Tyrese Maxey wearing “number” 0 and Reggie Jackson wearing “number” 00.
 </p>
 <p>
-After browsing wikipedia, it turns out basketball has some pretty interesting history with numbers. NCAA basketball players used to be restricted to one to two digit numbers that ended with the digits 1-5, meaning, by human convention, most NBA players didn’t use numbers ending with digits 6-9, even though they have always been allowed. A far more permissive rule however is ability to have the “number” 00 be a distinct jersey “number” from 0, However, until somewhat recently having two players with “numbers” 0 and 00 actually play in the same game was illegal! At some point this changed, however, leading to the Indiana Pacers getting to have this odd, yet significant, on the floor roster. Basketball seems to be at least somewhat unique in this; in my favorite sport, football, this is
-    <u><a href="https://en.wikipedia.org/wiki/NFL_uniform_numbers#Numbers_0_and_00">strictly prohibited</a></u>.
-    Furthermore, this begs the question: are the numbers on the back of basketball jerseys, even really numbers? Numbers are nothing more than a representation of some value or quantity, and can we really say that 0 and 00 represent different values or quantities?
-    I think uncontroversially, I can say the answer to the second question is no, and I would argue, the answer to the first question is no as well.
-    So, if I believe this, what are symbols on the back of basketball jerseys?
+After browsing Wikipedia, it turns out that basketball has a pretty interesting history with numbers. NCAA basketball players used to be restricted to one or two digit numbers that ended with the digits 1-5, so that two digit numbers could be signaled using only two hands. A knock on effect was that most NBA players didn’t use numbers ending with digits 6-9, even though they have always been allowed. A far more permissive rule however is the ability to have the “number” 00 be a distinct jersey “number” from 0.
+    However, until somewhat recently, having two players with “numbers” 0 and 00 actually play in the same game was illegal! At some point this changed, which led to the Indiana Pacers getting to have this odd, yet significant, on the floor roster.
+    Basketball seems to be at least somewhat unique in this as this is <u><a href="https://en.wikipedia.org/wiki/NFL_uniform_numbers#Numbers_0_and_00">strictly prohibited</a></u> in Football.
+    Common or not, this begs the question: are the numbers on the back of basketball jerseys, even really numbers? Numbers are nothing more than a representation of a value or quantity, and can we really say that 0 and 00 represent different values or quantities?
+    I think I can say uncontroversially that the answer to the second question is no, and I would argue, the answer to the first question is no as well.
+    So, if I believe this, what are symbols on the back of basketball jerseys if not numbers?
     If I was in charge or developing a database to contain the stats and records of every player, how should the data type for the jersey "number" actually be if not an integer?
 </p>
 <p>
-I came up with some options.
+To answer this question I came up with data model options. But to help inform how I did this, I need to explain my thinking.
+ The art and science of data modeling is something that you can read a great deal about, and I will acknowledge there are likely many valid approaches.
+    I am neither well read, nor well traveled enough to be able to speak to all possible experiences in the space.
+    For this exercise, I followed the principles, goals, and practices around data modeling I have picked up moving through my career.
 </p>
 <p>
-In coming up with these options I followed the following principles, goals, and practices around data modeling. The art and science of data modeling is something that you can read a great deal about, and I will acknowledge there are likely many valid approaches. I am neither well read, nor well traveled enough to be able to speak to all possible experiences in the space. For this exercise, I followed the strategies I have picked up as moving through my career.
-</p>
-<p>
-<ul>
-    <li>(Principle) Make illegal states unrepresentable
+<ol>
+    <li><strong>(Principle) Make illegal states unrepresentable</strong>
         <p>
-            There can’t be mistakes in the data if the data type doesn’t allow it. This is likely the most important one, and often undervalued,
-            regardless of how much it is said. Imagine a circle representing the space of all possible types (in reality this is infinite),
-            and the slice of data types that are correct occupies 1/8 of this circle.
-            Now image a data generating robot (or more realistically, an intern with chat GPT), that generates data of a random type within the circle,
-            the data type will be correct 1/8 of the time.
-            But, eliminate half of the possible data types that the robot can generate,
-            then you double the chances of correct data.
-            Do this again. Double it again.
-            I find us and our software are all more like random data generating robots than we care to admit.
+            There can’t be mistakes in the data if the data type doesn’t allow it.
+            This is likely the most important one, and often undervalued, regardless of how much it is said.
+            Imagine a data generating robot (or more realistically, an intern with ChatGPT), that generates data of random value within the bounds of the data model.
+            If the bounds of the data model are close to the bounds of the allowed state (data), then the data is much more likely to be correct.
+            If the amount of illegal states allowed by the data model far outnumbers the amount of legal states, then the opposite is true.
+            I find us and our software are all more like random data generating robots than we care to admit, and having a good data model helps.
         </p>
-    <li>(Principle) Make real relationships translate to the data model
+    <li><strong>(Principle) Make real relationships translate to the data model</strong>
     <p>
     Every real independent state should be representable by independent data.
     This is the fundamental problem with the “number” aka integer modeling above.
-        Whatever physical state or conceptual state of the world you are attempting to model in the data must not be confused with other mutually exclusive state.
-        The integer 0 and integer 00 are not mutually exclusive the same way the basketball jersey number 0 and 00 are.
-    Real relationships between really world entities, should be modeled as such within the data
+        Whatever physical state or conceptual state of the world you are attempting to model in the data must not be confused with any other mutually exclusive state.
+        The integer 0 and integer 00 are not mutually exclusive the same way the basketball jersey numbers 0 and 00 are.
+    Real relationships between real world entities should be modeled as such within the data.
     </p>
-    <li>(Goal) Ergonomic
+    <li><strong>(Goal) Ergonomic</strong>
     <p>
-    This one is interesting, and depends on what uses you have for the data in question. For jersey numbers, I would argue, most of the time you’re not summing them as we are doing to get the Pacers their record. But it is trivial to imagine using them for join, filters, and lookups.
-        ("What is the total sum of points by players wearing the number 0 on the Boston Celtics?" "Which players wore 23 prior to Micheal Jordan?" Etc etc).
+    This one is interesting as it depends on what uses you have for the data in question. For jersey numbers, I would argue that most of the time you’re not summing them as we are doing to get the Pacers their record. But it is trivial to imagine using them for join, filters, and lookups.
+        ("What is the total sum of points by players wearing the number 0 on the Boston Celtics?" "Which players wore 23 prior to Micheal Jordan?" Etc., etc.).
     Generally speaking, there is often more than one way to make illegal states unrepresentable and make real relationships translate, the modeling that provides the easiest use should likely be used.
     </p>
-    <li>(Practice) My overwhelming preference is to follow principle 1 to the ends of the earth, but often type systems aren’t expressive or flexible enough to be able to satisfy both 1 and 2 at the same time while keeping it ergonomic. Which leads to the last resorts of modeling
+    <li>Practices
+    <p>
+        My overwhelming preference is to follow principle 1 to the ends of the Earth, but often type systems aren’t expressive or flexible enough to be able to satisfy both 1 and 2 at the same time while keeping it ergonomic, which leads to my last resorts of modeling
+    </p>
     <ul>
-        <li>Convention -
-    The most popular and corrosive way. “Yes our data model allows for data that does not translate to any allowed state, but we’re just not gonna create data with illegal state”
-    <li>Constraints -
-    "Yeah the data model, allows for illegal data, but we’ll throw an error any time we see it." Think DB constraints and checks, and "assertNonNull" for Java. Often the sanest way when you have no other choice.
+        <li><strong>Convention</strong> -
+    The most popular and corrosive way. “Yes, our data model allows for data that does not translate to any allowed state, but we’re just not gonna create data with illegal state”
+    <li><strong>Constraints</strong> -
+    "Yeah the data model allows for illegal data, but we’ll throw an error any time we see it." Think DB constraints and checks, and "assertNonNull" for Java. These tools are often the sanest way forward when you have no other choice.
     </ul>
-</ul>
+</ol>
 <p>
-    For the exercise today, I will focus on the first 3 and  avoid convention and constraints as much as possible  because 1) I don’t prefer them and 2) they are entirely dependent on your system / tools what can be done, and 3) you can think that any of these modelings that have gaps, can be supplemented with them.
-    To give myself the type flexibility I will need to accomplish this without constraints I will use the <u><a
+    When talking about the data models for the jersey "numbers", I will focus on the first 3 and avoid convention and constraints as much as possible because 1) I don’t prefer them, 2) they are entirely dependent on your system / tools what can be done, and 3) you can think that any of these modelings that have gaps can be supplemented with them.
+    To give myself the type flexibility I will need to accomplish this without constraints, I will use the <u><a
         href="https://github.com/jklamer/gluino/blob/main/src/spec.rs">Gluino type system</a></u>,
     a type system of my own creating specifically for highly detailed data models and exercises like this. I won’t go into it fully, as it is both a system under development and contains way too much to talk about (to be covered later),
     but I will explain the types from it as I use them.
 </p>
 <p>
-    Alright, lets get into it, options ordered to fit the narrative:
+    Alright, let's get into it, options ordered to fit the narrative:
 </p>
 <ol>
-    <li>Option 1: Strings
+    <li><strong>Option 1: Strings</strong>
     <p>
-        Data type: UTF-8 String with Variable Length. Strings in Gluino have an character -> encoding mapping to define legal characters/glyphs and their computer representation, along with a size (more later)
+        Data type: UTF-8 String with Variable Length. Strings in Gluino have a character -> encoding mapping to define legal characters/glyphs and their computer representation, along with a size (more on this later).
     </p>
     <p>
-        If you asked me to bet what I thought the actual stats database use for Basketball jersey “numbers”, this would be my guess. And before I completely clown it, lets acknowledge that it fulfills the base principle of data modeling which is the uniqueness of the jerseys numbers can be represented by unique strings. There is no confusing of “0” and “00” in this model. Those are two different string with two different lengths. However, this model allows for a near infinite amount of illegal states. “01”, “He is wearing the jersey number forty five”, and “cheese” are all valid strings, and non of them are valid jersey numbers. Lets try and constrain this a bit
+        If you asked me to bet what I thought the actual stats database use for basketball jersey “numbers”, this would be my guess. Before I tear into it, let's acknowledge that it fulfills the base principle of data modeling which is that the uniqueness of the jersey numbers can be represented by unique strings. There is no confusing “0” and “00” in this model. Those are two different strings with two different lengths. However, this model allows for a near infinite amount of illegal states. “01”, “he is wearing the jersey number forty five”, and “cheese” are all valid strings, and none of them are valid jersey numbers. Let's try and constrain this a bit.
     </p>
-    <li>Option 2: Short Strings
+    <li><strong>Option 2: Short Strings</strong>
     <p>
-        Data type: UTF-8 String with size of Closed Range [1, 3). All variable sized/length data types within Gluino can be constrained by a “size”. The “Size” constraint can be one of the following: Variable, Fixed, Closed Range, Open range (either Greater than X or less than X). For strings, this size refers to the number of characters allowed.
+        Data type: UTF-8 String with size of Closed Range [1, 3). All variable sized/length data types within Gluino can be constrained by a “size”. The “size” constraint can be one of the following: Variable, Fixed, Closed Range, Open range (either Greater than X or less than X). For strings, this size refers to the number of characters allowed.
     </p>
     <p>
         This modeling also fulfills the need of uniqueness among jersey numbers, and constrains the number of illegal states greatly, as any string over 2 characters cannot possibly represent a valid jersey number, and with a minimum of 1 the empty string cannot be used as a jersey number. This gets us closer to our goals, but illegal jersey numbers such as “hi”, “04”, and “no” are still representable. To continue to chip away at these illegal states, we need to start introducing some more types.
     </p>
-    <li>Option 3: Introduce const sets
+    <li><strong>Option 3: Introduce const sets</strong>
     <p>
-        Data type: List with Size of Closed Range[1,3) with a value type of Const Set of Type UTF-8 String with size of Fixed(1), where the Const Set consists of “0”,”1”,”2”,”3”,”4”,”5”,”6”,”7”,”8”,“9”. A Gluino list is what you expect, contains ordered elements of a specified type. In this case, the value type is a Gluino Const set, which is something I feel the need to describe in more detail.
+        Data type: List with Size of Closed Range [1,3) with a value type of Const Set of Type UTF-8 String with size of Fixed(1), where the Const Set consists of “0”,”1”,”2”,”3”,”4”,”5”,”6”,”7”,”8”,“9”. A Gluino list is what you expect, it contains ordered elements of a specified type. In this case, the value type is a Gluino Const set, which is something I feel the need to describe in more detail.
     </p>
     <p>
-        The addition of the Const Set to the type system came from trying to map the Rust enum and Java enum into the same Gluino type, and realizing that they were completely different. A const set is a set of constants of a certain data type. This is useful when the amount of legal states of for a given data type is orders of magnitude less than the number of states that the data type itself can represent. This is very useful in the case of strings, where the amount of states that can be represented is massive, but we just want a couple options. This is part of what a java enum does, there are near infinite string options, but we want a fixed set of them. You can imagine this is useful for other domains as well: memory size options for a hosted instance size (const set of unsigned 64 bit integers), the byte headers determining protocol version in a certain context (const set of bytes with fixed size(2)), or even a fixed set of records that refer to given employees, (const set of records with name and employee id). For this use case, the const set I’ve created can be thought of as “digits”. Using this alias, this type makes a lot more sense restated as a list of [1,3) digits. 
+        The addition of the Const Set to the type system came from trying to map the Rust enum and Java enum into the same Gluino type, and realizing that they were completely different. A const set is a set of constants of a certain data type. This is useful when the amount of legal states for a given data type is orders of magnitude less than the number of states that the data type itself can represent. This is very useful in the case of strings, where the amount of states that can be represented is massive, but we just want a couple options. This is part of what a Java enum does, there are near infinite string options, but we want a fixed set of them. You can imagine this is useful for other domains as well: memory size options for a hosted instance size (const set of unsigned 64 bit integers), the byte headers determining protocol version in a certain context (const set of bytes with fixed size(2)), or even a fixed set of records that refer to given employees, (const set of records with name and employee id). For this use case, the const set I’ve created can be thought of as “digits”. Using this alias, this type makes a lot more sense restated as a list of [1,3) digits. 
     </p>
     <p>
-        With this type, we’ve finally eliminated all possible incorrect glyphs from the jersey “number”, and the description of the type if started to sound more and more like the description of a basketball jersey “number”. But there is one problem, there are still illegal states that can be represented. You’re not allowed to have the jersey number 08, but this data type still allows it
+        With this type, we’ve finally eliminated all possible incorrect glyphs from the jersey “number”, and the description of the type is starting to sound more and more like the description of a basketball jersey “number”. But there is one problem, there are still illegal states that can be represented. You’re not allowed to have the jersey number 08, but this data type still allows it.
     </p>
-    <li>Option 4: Sum Type time to drive it home
+    <li><strong>Option 4: Sum Type time to drive it home</strong>
     <p>
-        Data type: A const set of strings with size fixed(2) with const values “00” in union with a const set consisting of “0”,”1”,”2”,”3”,”4”,”5”,”6”,”7”,”8”, “9” in union with a tuple with two elements one being a const set consisting of ”1”,”2”,”3”,”4”,”5”,”6”,”7”,”8”, “9” and the other being a const set consisting of “0”,”1”,”2”,”3”,”4”,”5”,”6”,”7”,”8”, “9”. Stated in English: a basketball number is either “00”, a single digit, or two digits where the first digit isn’t “0”. Now the type, matches the description of a basketball “number”. You can represent all possible “numbers” and nothing more.
+        Data type: A Const Set of UTF-8 Strings with size Fixed(2) consisting of “00” in union with a Const Set of UTF-8 Strings with size Fixed(1) consisting of “0”,”1”,”2”,”3”,”4”,”5”,”6”,”7”,”8”, “9” in union with a Tuple with two elements one being a Const Set of UTF-8 Strings with size Fixed(1) consisting of ”1”,”2”,”3”,”4”,”5”,”6”,”7”,”8”, “9” and the other being a Const Set of UTF-8 Strings with size Fixed(1) consisting of “0”,”1”,”2”,”3”,”4”,”5”,”6”,”7”,”8”, “9”. Stated in English: a basketball number is either “00”, a single digit, or two digits where the first digit isn’t “0”. Now the type matches the description of a basketball “number”. You can represent all possible “numbers” and nothing more.
     </p>
 </ol>
 <p>
-    So, at the end of the day, which type should you go with? It depends! No programming language today has any ability to make option 4 ergonomic in any fashion whatsoever, whats the point of having data with “perfect” type if you never want to use it because its a pain every time. But for simplicity, and trusted data writers, a short string could also do the trick. For my mileage, I would go with a simple union with the const set of “00” and an unsigned integer with a constraint of <100 on the unsigned integer. This maintains the ability to represent “00” and 0 as different entities (not equal), and all possible “number” entities are representable without any representable entities that are illegal. By using a single constraint we can make the type description simpler, and potentially way easier to use; a balance of complexity between the data type and constraints is always nice to have.
+    So, at the end of the day,
+    which type should you go with? It depends!
+    No programming language today has any ability to make option 4 ergonomic in any fashion whatsoever,
+    so what's the point of having data with “perfect” type if you never want to use it because it's a pain every time?
+    For practicality, simplicity, and with trusted data writers, a short string could also be "good enough".
+    If I let myself use constraints, I would go with a simple union with the const set of “00” and an unsigned integer with a constraint of <100 on the unsigned integer. This maintains the ability to represent “00” and 0 as different entities (not equal), and all possible “number” entities are representable without any illegal states possible. By using a single constraint, we can make the type description simpler, and potentially way easier to use; a balance of complexity between the data type and constraints is always nice to have.
 </p>
 <p>
-    But does any of this actually matter? Aren’t types just constraints on bytes provided by the programming language? Its turtles on the way down for sure, but how things get represented within a system matter. If you’re still reading at this point, I imagine Im preaching to the choir. But even in recent history, a president was saying that people at impossible ages were still gettin their Social Security checks. Whether that was because of weird year defaults for the age field or not having the ability to determine who was actually getting paid, it gave credence to pretty deleterious theories. Even for this specific case, a post from an officiating form claims that the rules of jersey “numbers” actually had to change for a little while,
+    But, does any of this actually matter?
+    Aren’t types just constraints on bytes provided by the programming language?
+    It is turtles on the way down for sure, but how things get represented within a system matters.
+    If you’re still reading at this point, I imagine I'm preaching to the choir. But even in recent history, a president was saying that people at impossible ages were still getting their Social Security checks.
+    Whether that was because of weird year defaults for the age field or not having the ability to determine who was actually getting paid, it gave credence to pretty deleterious theories.
+    Even in this specific case, a post from an officiating form claims that the rules of jersey “numbers” actually had to change for a little while,
     <u><a href="https://forum.officiating.com/basketball/105948-0-00-identical.html#post1050307">because the stat
-        keeping software couldn’t actually tell the difference between 0 and 00</a></u>! But we can’t be too hard on the programmer there, they were told to create a system that stores jersey numbers, when they are anything but.
+        keeping software couldn’t actually tell the difference between 0 and 00</a></u>!
+    Meaning that a programmer fixing a modeling bug likely allowed the Pacers to get this record!
+    We can’t be too hard on the bug though. The original programmer was likely told to create a system that stores jersey numbers, when they are anything but.
 </p>
