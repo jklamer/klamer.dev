@@ -1,1 +1,1 @@
-Idiot website speedrun in ipv6
+Idiot website speedrun
