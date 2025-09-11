@@ -55,6 +55,6 @@ jobs:
             docker stop klamer_dev || true
             docker rm klamer_dev || true
             docker run -d --name  klamer_dev --env RUST_LOG=INFO --env DEPLOYED_ENV=AWS -p 80:80 -p 443:443 ${{ secrets.REPO }}:"latest" klamer_dev -d klamer.dev -e ${{ secrets.EMAIL }} -b my-prod-certs --prod
-            found=0; end=$((SECONDS+5)); while [ $SECONDS -lt $end ]; do [ "$(curl -s -o /dev/null -w "%{http_code}" http://localhost:80)" -eq 308 ] && { echo "Service up"; found=1; break; }; sleep 0.5; done; [ $found -eq 1 ] || exit 1
+            found=0; end=$((SECONDS+5)); while [ $SECONDS -lt $end ];  do status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:80 || echo ""); [ "$status" = "308" ] && { echo "Service up"; found=1; break; }; sleep 0.5; done; [ $found -eq 1 ] || exit 1
             docker image prune -af
           EOF
