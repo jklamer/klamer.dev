@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Style Guidance
+
+Aim to be correct, concise, and consistent with the code you generate. If you are unsure if you should keep generating more, ask.
+
 ## Build & Run Commands
 
 ```bash

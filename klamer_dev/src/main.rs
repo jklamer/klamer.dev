@@ -39,6 +39,7 @@ const LOGO: &[u8] = include_bytes!("../assets/klamer.dev.png");
 const BASE_CSS: &str = include_str!("../css/base.css");
 const HOME: &str = include_str!("../assets/home.html");
 const GOOD_READS: &str = include_str!("../assets/good_reads.html");
+const MODELS: &str = include_str!("../assets/models.html");
 const FOUR04: &str = include_str!("../assets/404.html");
 const BLOG_POST_CONTENT: &[(&'static str, &'static str)] = &list_blog_files!();
 
@@ -105,6 +106,7 @@ async fn main() {
         .route("/", get(home_page))
         .route("/blog", get(blog_page))
         .route("/good_reads", get(good_reads_page))
+        .route("/models", get(models_page))
         .route("/blog/{post_name}", get(blog_post))
         .route("/annie", get(annie_page))
         .route("/favicon.png", get(icon))
@@ -256,6 +258,10 @@ async fn good_reads_page() -> Html<String> {
     page(vec![GOOD_READS.into()], true)
 }
 
+async fn models_page() -> Html<String> {
+    page(vec![MODELS.into()], true)
+}
+
 // write axum handlers needed to set up a blog
 async fn blog_page() -> Html<String> {
     let mut post_list_builder = UlistBuilder::default()
@@ -300,7 +306,8 @@ fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool) -> Html<String> {
                 .element(UlistBuilder::default()
                     .item(Anchor("/".to_string(), "Home"))
                     .item(Anchor("/blog".to_string(), "Blog"))
-                    .item(Anchor("/good_reads".to_string(), "Good_Reads"))
+                    .item(Anchor("/good_reads".to_string(), "Reads"))
+                    .item(Anchor("/models".to_string(), "Models"))
                     .attributes(AttributesBuilder::default()
                         .attribute(CLASS(vec!["section-items".to_string()]))
                         .build().unwrap())
