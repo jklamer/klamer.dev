@@ -358,7 +358,7 @@ fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool, include_prism: bo
                 .attribute(CLASS(vec!["Content".to_string()]))
                 .build().unwrap())
             .build().unwrap())
-        .element(if include_footer { "<footer>©2025 Jack Klamer<p>Source: " } else { "" })
+        .element(if include_footer { "<footer>©2026 Jack Klamer<p>Source: " } else { "" })
         .element(if include_footer { Anchor("https://github.com/jklamer/klamer.dev".to_string(), "https://github.com/jklamer/klamer.dev") } else { Anchor("https://github.com/jklamer/klamer.dev".to_string(), "") })
         .attributes(AttributesBuilder::default()
             .attribute(CLASS(vec!["center".to_string()]))
