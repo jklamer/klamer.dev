@@ -32,6 +32,7 @@ Personal website built with Rust/Axum. Three workspace crates:
 - **klamer_dev/** - Main web server using Axum with embedded static content
 - **blog_files_macro/** - Proc macro that embeds blog HTML files at compile time as `BLOG_POST_CONTENT`
 - **rustls_acme_cache/** - S3-backed Let's Encrypt certificate caching
+- **klamer_dev/css** - CSS for the project.
 
 ### Key Design Decisions
 

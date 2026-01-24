@@ -37,6 +37,7 @@ mod html;
 const ICON: &[u8] = include_bytes!("../assets/k_logo.dev.png");
 const LOGO: &[u8] = include_bytes!("../assets/klamer.dev.png");
 const BASE_CSS: &str = include_str!("../css/base.css");
+const PRISM_CSS: &str = include_str!("../css/prism-gruvbox-dark.css");
 const HOME: &str = include_str!("../assets/home.html");
 const GOOD_READS: &str = include_str!("../assets/good_reads.html");
 const MODELS: &str = include_str!("../assets/models.html");
@@ -112,6 +113,7 @@ async fn main() {
         .route("/favicon.png", get(icon))
         .route("/logo.png", get(logo))
         .route("/base.css", get(base_css))
+        .route("/prism.css", get(prism_css))
         .fallback(four04)
         .layer(GovernorLayer{ config: governor_conf })
         .layer(TraceLayer::new_for_http());
@@ -251,15 +253,15 @@ fn get_post_name(file_name: &str) -> &str {
 }
 
 async fn home_page() -> Html<String> {
-    page(vec![HOME.into()], false)
+    page(vec![HOME.into()], false, false)
 }
 
 async fn good_reads_page() -> Html<String> {
-    page(vec![GOOD_READS.into()], true)
+    page(vec![GOOD_READS.into()], true, false)
 }
 
 async fn models_page() -> Html<String> {
-    page(vec![MODELS.into()], true)
+    page(vec![MODELS.into()], true, false)
 }
 
 // write axum handlers needed to set up a blog
@@ -272,22 +274,22 @@ async fn blog_page() -> Html<String> {
         post_list_builder = post_list_builder.item(Anchor(format!("/blog/{post_name}"), *post_name))
     }
 
-    page(vec![Header2("Posts".to_string()).into(), post_list_builder.build().unwrap().into()], true)
+    page(vec![Header2("Posts".to_string()).into(), post_list_builder.build().unwrap().into()], true, false)
 }
 
 async fn blog_post(Path(post_name): Path<String>) -> Html<String> {
-    page(vec![POSTS.get(post_name.as_str()).unwrap_or(&FOUR04).into()], true)
+    page(vec![POSTS.get(post_name.as_str()).unwrap_or(&FOUR04).into()], true, true)
 }
 
 async fn annie_page() -> Html<String> {
-    page(vec!["She's the best".into()], true)
+    page(vec!["She's the best".into()], true, false)
 }
 
 async fn four04() -> Html<String> {
-    page(vec![FOUR04.into()], false)
+    page(vec![FOUR04.into()], false, false)
 }
 
-fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool) -> Html<String> {
+fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool, include_prism: bool) -> Html<String> {
     let top_nav: Vec<Box<dyn IntoHtml>> = vec![
         Box::new(DivBuilder::default()
             .element(Anchor("/".to_string(), ImgBuilder::default()
@@ -321,12 +323,26 @@ fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool) -> Html<String> {
                 .build().unwrap()
         ),
     ];
+    let prism_head = if include_prism {
+        "<link rel=\"stylesheet\" href=\"/prism.css\">"
+    } else {
+        ""
+    };
+    let prism_scripts = if include_prism {
+        "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/prism.min.js\"></script>\
+         <script src=\"https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-rust.min.js\"></script>\
+         <script src=\"https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-python.min.js\"></script>\
+         <script src=\"https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-javascript.min.js\"></script>"
+    } else {
+        ""
+    };
     Html("<html>".to_string()
         + "<head>
           <title>Klamer.dev</title>
           <link rel=\"icon\" type=\"image/png\" href=\"/favicon.png\">
-          <link rel=\"stylesheet\" href=\"/base.css\">
-          <script src=\"https://unpkg.com/htmx.org@1.9.10\" integrity=\"sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC\" crossorigin=\"anonymous\"></script>
+          <link rel=\"stylesheet\" href=\"/base.css\">"
+        + prism_head
+        + "<script src=\"https://unpkg.com/htmx.org@1.9.10\" integrity=\"sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC\" crossorigin=\"anonymous\"></script>
           </head>"
         + "<body>"
         + DivBuilder::default()
@@ -349,6 +365,7 @@ fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool) -> Html<String> {
             .build().unwrap())
         .build().unwrap()
         .html_string().as_str()
+        + prism_scripts
         + "</body>"
         + "</html>")
 }
@@ -364,6 +381,10 @@ async fn logo() -> &'static [u8] {
 
 async fn base_css() -> &'static str {
     BASE_CSS
+}
+
+async fn prism_css() -> &'static str {
+    PRISM_CSS
 }
 
 #[cfg(test)]
