@@ -230,3 +230,37 @@ impl IntoHtml for Header2 {
         html_element_with_attributes("h2", None, &None) + self.0.as_str() + "</h2>"
     }
 }
+
+pub enum OgType {
+    Website,
+    Article,
+}
+
+impl std::fmt::Display for OgType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OgType::Website => write!(f, "website"),
+            OgType::Article => write!(f, "article"),
+        }
+    }
+}
+
+pub fn extract_h1(html: &str) -> Option<&str> {
+    let start = html.find("<h1>")? + 4;
+    let end = html[start..].find("</h1>")?;
+    Some(&html[start..start + end])
+}
+
+pub fn slug_to_title(slug: &str) -> String {
+    slug.replace(['-', '_'], " ")
+        .split_whitespace()
+        .map(|w| {
+            let mut chars = w.chars();
+            match chars.next() {
+                None => String::new(),
+                Some(f) => f.to_uppercase().collect::<String>() + chars.as_str(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}

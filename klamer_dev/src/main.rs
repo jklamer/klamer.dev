@@ -30,7 +30,7 @@ use blog_files_macro::list_blog_files;
 use rustls_acme_cache::{AcmeS3Cache, NoAccountAcmeS3Cache};
 
 use crate::html::Attribute::{WidthVw, CLASS};
-use crate::html::{Anchor, AttributesBuilder, DivBuilder, Header2, ImgBuilder, IntoHtml, UlistBuilder};
+use crate::html::{Anchor, AttributesBuilder, DivBuilder, Header2, ImgBuilder, IntoHtml, OgType, UlistBuilder, extract_h1, slug_to_title};
 
 mod html;
 
@@ -47,6 +47,11 @@ const BLOG_POST_CONTENT: &[(&'static str, &'static str)] = &list_blog_files!();
 lazy_static! {
     static ref POST_NAMES: Vec<&'static str> = BLOG_POST_CONTENT.iter().map(|b| get_post_name(b.0)).collect();
     static ref POSTS: HashMap<&'static str, &'static str> = BLOG_POST_CONTENT.iter().map(|b| (get_post_name(b.0), b.1)).collect();
+    static ref POST_TITLES: HashMap<&'static str, String> = BLOG_POST_CONTENT.iter().map(|b| {
+        let name = get_post_name(b.0);
+        let title = extract_h1(b.1).map(|t| t.to_string()).unwrap_or_else(|| slug_to_title(name));
+        (name, title)
+    }).collect();
 }
 
 #[derive(Parser, Debug)]
@@ -253,15 +258,15 @@ fn get_post_name(file_name: &str) -> &str {
 }
 
 async fn home_page() -> Html<String> {
-    page(vec![HOME.into()], false, false)
+    page(vec![HOME.into()], false, false, "Klamer.dev", "Idiot website speedrun", OgType::Website)
 }
 
 async fn good_reads_page() -> Html<String> {
-    page(vec![GOOD_READS.into()], true, false)
+    page(vec![GOOD_READS.into()], true, false, "Klamer.dev", "Things to read", OgType::Website)
 }
 
 async fn models_page() -> Html<String> {
-    page(vec![MODELS.into()], true, false)
+    page(vec![MODELS.into()], true, false, "Klamer.dev", "Models For Thinking", OgType::Website)
 }
 
 // write axum handlers needed to set up a blog
@@ -274,22 +279,23 @@ async fn blog_page() -> Html<String> {
         post_list_builder = post_list_builder.item(Anchor(format!("/blog/{post_name}"), *post_name))
     }
 
-    page(vec![Header2("Posts".to_string()).into(), post_list_builder.build().unwrap().into()], true, false)
+    page(vec![Header2("Posts".to_string()).into(), post_list_builder.build().unwrap().into()], true, false, "Klamer.dev", "Posts & writing", OgType::Website)
 }
 
 async fn blog_post(Path(post_name): Path<String>) -> Html<String> {
-    page(vec![POSTS.get(post_name.as_str()).unwrap_or(&FOUR04).into()], true, true)
+    let title = POST_TITLES.get(post_name.as_str()).map(|s| s.as_str()).unwrap_or(post_name.as_str());
+    page(vec![POSTS.get(post_name.as_str()).unwrap_or(&FOUR04).into()], true, true, title, "klamer.dev", OgType::Article)
 }
 
 async fn annie_page() -> Html<String> {
-    page(vec!["She's the best".into()], true, false)
+    page(vec!["She's the best".into()], true, false, "Klamer.dev", "klamer.dev", OgType::Website)
 }
 
 async fn four04() -> Html<String> {
-    page(vec![FOUR04.into()], false, false)
+    page(vec![FOUR04.into()], false, false, "Klamer.dev", "klamer.dev", OgType::Website)
 }
 
-fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool, include_prism: bool) -> Html<String> {
+fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool, include_prism: bool, og_title: &str, og_description: &str, og_type: OgType) -> Html<String> {
     let top_nav: Vec<Box<dyn IntoHtml>> = vec![
         Box::new(DivBuilder::default()
             .element(Anchor("/".to_string(), ImgBuilder::default()
@@ -336,11 +342,17 @@ fn page(content: Vec<Box<dyn IntoHtml>>, include_footer: bool, include_prism: bo
     } else {
         ""
     };
+    let og_tags = format!(
+        "<meta property=\"og:title\" content=\"{og_title}\">\
+         <meta property=\"og:description\" content=\"{og_description}\">\
+         <meta property=\"og:type\" content=\"{og_type}\">"
+    );
     Html("<html>".to_string()
         + "<head>
           <title>Klamer.dev</title>
           <link rel=\"icon\" type=\"image/png\" href=\"/favicon.png\">
           <link rel=\"stylesheet\" href=\"/base.css\">"
+        + &og_tags
         + prism_head
         + "<script src=\"https://unpkg.com/htmx.org@1.9.10\" integrity=\"sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC\" crossorigin=\"anonymous\"></script>
           </head>"
