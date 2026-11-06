@@ -1,4 +1,4 @@
-FROM rust:1.93.1-bookworm AS builder
+FROM rust:1.99.1-bookworm AS builder
 WORKDIR /usr/src
 COPY . .
 RUN cargo install --path ./klamer_dev
