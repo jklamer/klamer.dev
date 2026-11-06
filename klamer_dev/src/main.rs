@@ -9,11 +9,11 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::extract::{Path, State};
-use axum::http::{header, HeaderValue, StatusCode, Uri};
+use axum::http::{HeaderValue, StatusCode, Uri, header};
 use axum::response::{Html, IntoResponse, Redirect};
 use axum::routing::get;
 use axum::{BoxError, Router};
-use axum_extra::extract::Host;
+use axum_extra::{TypedHeader, headers};
 use axum_server::Handle;
 use clap::Parser;
 use futures::StreamExt;
@@ -21,15 +21,15 @@ use rustls_acme::UseChallenge::Http01;
 use rustls_acme::{AcmeConfig, ResolvesServerCertAcme};
 use tokio::signal;
 use tokio::signal::ctrl_c;
-use tower_governor::governor::GovernorConfigBuilder;
 use tower_governor::GovernorLayer;
+use tower_governor::governor::GovernorConfigBuilder;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber;
 
 use blog_files_macro::list_blog_files;
 use rustls_acme_cache::{AcmeS3Cache, NoAccountAcmeS3Cache};
 
-use crate::html::Attribute::{WidthVw, CLASS};
+use crate::html::Attribute::{CLASS, WidthVw};
 use crate::html::{Anchor, AttributesBuilder, DivBuilder, Header2, ImgBuilder, IntoHtml, OgType, UlistBuilder, extract_h1, slug_to_title};
 
 mod html;
@@ -120,7 +120,7 @@ async fn main() {
         .route("/base.css", get(base_css))
         .route("/prism.css", get(prism_css))
         .fallback(four04)
-        .layer(GovernorLayer{ config: governor_conf })
+        .layer(GovernorLayer::new(governor_conf))
         .layer(TraceLayer::new_for_http());
 
     tracing::info!("Starting server");
@@ -141,7 +141,7 @@ async fn main() {
             .state();
         let acceptor = state.axum_acceptor(state.default_rustls_config());
 
-        let handle = Handle::new();
+        let handle : Handle<SocketAddr> = Handle::new();
         tokio::spawn(handle_http01_challenge_or_redirect(args.port, args.http_port, shutdown_signal(Some(handle.clone())), state.resolver().clone()));
 
         tokio::spawn(async move {
@@ -157,7 +157,9 @@ async fn main() {
             }
         });
         let addr = [SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), args.port), SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), args.port)];
-        let server = axum_server::from_tcp(TcpListener::bind(&addr[..]).unwrap())
+        let listener = TcpListener::bind(&addr[..]).unwrap();
+        listener.set_nonblocking(true).unwrap();
+        let server = axum_server::from_tcp(listener).unwrap()
             .acceptor(acceptor)
             .handle(handle);
         server.serve(app.into_make_service_with_connect_info::<SocketAddr>())
@@ -175,7 +177,7 @@ async fn main() {
     }
 }
 
-async fn shutdown_signal(handle: Option<Handle>) {
+async fn shutdown_signal(handle: Option<Handle<SocketAddr>>) {
     let ctrl_c = async {
         ctrl_c()
             .await
@@ -204,8 +206,8 @@ async fn handle_http01_challenge_or_redirect<F>(https_port: u16, http_port: u16,
 where
     F: Future<Output = ()> + Send + 'static
 {
-    let redirect_handler = move |Host(host): Host, uri: Uri| async move {
-        match make_https(host, uri, https_port, http_port) {
+    let redirect_handler = move |TypedHeader(host): TypedHeader<headers::Host>, uri: Uri| async move {
+        match make_https(host.to_string(), uri, https_port, http_port) {
             Ok(uri) => Ok(Redirect::permanent(&uri.to_string())),
             Err(error) => {
                 tracing::warn!(%error, "failed to convert URI to HTTPS");

@@ -7,19 +7,18 @@ edition = "2024"
 
 [dependencies]
 axum = { version = "0.8.1", features = ["http2"] }
-axum-extra = {version = "0.10.0"}
+axum-extra = { version = "0.12.6", features = ["typed-header"] }
 tokio = { features = ["macros", "rt-multi-thread", "signal"], version = "1.42.0" }
-tower = "0.5.2"
 futures = "0.3.30"
 derive_builder = "0.20.2"
-tower-http = { version = "0.6.2", features = ["trace"] }
+tower-http = { version = "0.7.1", features = ["trace"] }
 tracing-subscriber = "0.3.19"
 tracing = "0.1.41"
 blog_files_macro = { path = "../blog_files_macro" }
 lazy_static = "1.4.0"
-rustls-acme = { version = "0.13", features = ["axum"] }
+rustls-acme = { version = "0.15.4", features = ["axum"] }
 clap = { version = "4.5.23", features = ["derive"] }
 log = "0.4.20"
-axum-server = { version = "0.7.1", features = ["tls-rustls"] }
+axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 rustls_acme_cache = { path = "../rustls_acme_cache" }
-tower_governor = "0.6.0"
+tower_governor = "0.8.0"
