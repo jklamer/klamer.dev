@@ -3,3 +3,4 @@
 build.env
 /user_data.sh
 **.DS_Store
+.mcp.json
